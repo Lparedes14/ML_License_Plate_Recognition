@@ -1,0 +1,29 @@
+# ============================================================================
+# Pinned-by-minimum dependency list.
+#
+# Preferred install (gives you `import anpr` from anywhere):
+#     pip install -e ".[download,demo,dev]"
+#
+# This file exists as a fallback for environments where an editable install is
+# awkward (some Colab runtimes). If you use it, also run:
+#     pip install -e .
+# ============================================================================
+
+numpy>=1.24
+pandas>=2.0
+matplotlib>=3.7
+opencv-python>=4.8
+pillow>=10.0
+scikit-learn>=1.3
+tensorflow>=2.15
+pyyaml>=6.0
+
+# --- optional: EMNIST download route (see src/anpr/data/emnist.py) ---------
+torch>=2.0
+torchvision>=0.15
+
+# --- optional: demo interface (ML-47) --------------------------------------
+streamlit>=1.30
+
+# --- optional: tests -------------------------------------------------------
+pytest>=7.4

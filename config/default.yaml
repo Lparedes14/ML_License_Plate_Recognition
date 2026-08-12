@@ -1,0 +1,107 @@
+# ============================================================================
+# Every tunable number in the project, in one file.
+#
+# WHY A CONFIG FILE RATHER THAN CONSTANTS IN CODE
+# §8 of the brief promises the instructor will ask, live: "what is your
+# model's learning rate? how many layers? what are your train/test/validate
+# sample sizes?" Having one file to point at beats hunting through cells.
+# It also means an experiment is a config diff, not a code diff.
+#
+# Loaded by: src/anpr/config.py -> load_config()
+# ============================================================================
+
+# --- Reproducibility ------------------------------------------------------
+# Set once and threaded through numpy, random, and TensorFlow. Changing this
+# changes every split and every weight init, so treat it as part of a result.
+seed: 42
+
+data:
+  # Subsample sizes. EMNIST ByClass ships 697,932 train / 116,323 test.
+  # We subsample for speed; both numbers are recorded in the provenance file
+  # so any reported metric states the sample size it was measured on.
+  n_train_max: 220000
+  n_test_max: 60000
+
+  # Fraction of the TRAIN split carved off for validation. The test split is
+  # a physically separate EMNIST file, never touched during development.
+  val_fraction: 0.10
+
+  # The input contract. Every image entering the model is exactly this shape
+  # and range - enforced by assert_input_contract(), not by convention.
+  img_size: 28
+  n_classes: 36          # 0-9 + A-Z after case merge
+
+  # How to handle EMNIST's natural class imbalance (ML-39).
+  # ByClass preserves English letter frequency: plenty of E, very little Q.
+  # Plate characters are close to uniform, so the training distribution does
+  # not match the deployment distribution.
+  #   "none"      - train on the natural distribution (baseline arm)
+  #   "weighted"  - class_weight in model.fit(), inversely proportional to freq
+  #   "resampled" - cap each class at the median count
+  # Report BOTH "none" and your chosen arm so the decision is evidenced.
+  imbalance_strategy: "weighted"
+
+  # Case handling (ML-39). Plates are uppercase-only, so the 62 raw ByClass
+  # labels must collapse to 36 somehow:
+  #   "merge" - fold lowercase into uppercase ('a' -> 'A'). More data, but a
+  #             handwritten 'a' looks nothing like a printed 'A'.
+  #   "drop"  - discard the 26 lowercase classes entirely. Less data, cleaner
+  #             class definitions.
+  # This is a decision the rubric expects us to justify, not assume. Run both.
+  case_strategy: "merge"
+
+training:
+  batch_size: 256
+  epochs_mlp: 6          # baseline dense net - the "what does simple get us" number
+  epochs_cnn: 18         # the real classifier
+  epochs_ft: 6           # fine-tune pass on synthetic printed glyphs (domain gap)
+  lr: 0.001              # Adam, initial
+  lr_ft: 0.0002          # lower LR for fine-tuning so we adapt, not overwrite
+  early_stopping_patience: 4
+
+plates:
+  # Synthetic plate generation (ML-37). We render plates ourselves because it
+  # gives us ground-truth labels for free and lets us dial image quality up
+  # and down - which is what turns "we got 78%" into "78% at tier B, 91% at
+  # tier A, 54% at tier C", a far stronger results section (§5).
+  plate_len: 7
+  n_eval_plates: 400
+
+  # Characters excluded from generated plates. Many real jurisdictions omit
+  # I, O and Q precisely because they collide with 1, 0 and O. Set to "" to
+  # include them and measure how much damage they do - that comparison is a
+  # good slide.
+  excluded_chars: ""
+
+  # The three quality tiers (ML-41). Every accuracy number we report must
+  # state which tier it was measured on (§5 - reporting without conditions
+  # is a -5 deduction).
+  tiers:
+    A:  # clean: straight-on, high contrast, no noise. The optimistic ceiling.
+      blur_sigma: 0.0
+      noise_std: 0.0
+      rotation_deg: 0.0
+      contrast: 1.0
+    B:  # realistic: mild camera blur, slight angle. The number we headline.
+      blur_sigma: 0.8
+      noise_std: 0.03
+      rotation_deg: 3.0
+      contrast: 0.8
+    C:  # degraded: motion blur, low light, steep angle. Where we break.
+      blur_sigma: 1.8
+      noise_std: 0.08
+      rotation_deg: 8.0
+      contrast: 0.55
+
+business:
+  # Meridian Access Systems' numbers, straight from the brief (§2).
+  # These drive the trust-threshold analysis (ML-52), which is the real
+  # design lever: not "how accurate can we get" but "which reads do we
+  # trust automatically, and which do we send to a human".
+  vehicles_per_day: 4200
+  cost_per_dispute: 8.50      # USD, call-centre cost to resolve one misread
+  dispenser_capex: 14000      # USD, installed cost of one ticket dispenser
+  n_sites: 34
+  cost_per_manual_review: 1.20  # ASSUMPTION - not given in the brief.
+                                # Must be labelled as our assumption in the
+                                # business note, not presented as fact.
