@@ -22,9 +22,12 @@ DECISION 1 - CASE (cfg.data.case_strategy)
     comparison is worth more marks than either number alone.
 
 DECISION 2 - IMBALANCE (cfg.data.imbalance_strategy)
-    ByClass preserves natural English letter frequency. Our own measurement:
-    'Q' is ~0.80% of the data while 'N' is ~2.82% - a 3.5x spread, and far
-    worse against the digits. Plate characters are close to UNIFORM.
+    ByClass preserves natural English letter frequency. Our own measurement
+    (artifacts/provenance/acceptance_record.md): rarest class 'K' at 0.73%,
+    commonest '1' at 5.52% - a 7.6x spread, and far worse against the digits.
+    Plate characters are close to UNIFORM. These figures shift slightly between
+    EMNIST loads (different subsample), so treat the committed acceptance
+    record as the source of truth rather than this docstring.
 
     So the training distribution does not match the deployment distribution.
     Left alone, the model learns "when unsure, guess a common letter", which
@@ -185,7 +188,9 @@ def class_distribution_report(y: np.ndarray, n_classes: int = 36) -> dict:
     """Summarise the imbalance, in the terms the report needs.
 
     Produces the numbers that turn "we noticed the imbalance" into "the
-    imbalance is 3.5x and here is the evidence" - which is what §3 asks for.
+    imbalance is 7.61x and here is the evidence" - which is what §3 asks for.
+    (Figure as of artifacts/provenance/acceptance_record.md - regenerate this
+    docstring's number if that file is regenerated from a different EMNIST load.)
 
     Args:
         y: Merged labels in [0, 36).

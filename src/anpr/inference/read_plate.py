@@ -165,9 +165,14 @@ def load_reader(model_path: str | Path, classmap_path: str | Path | None = None)
 
     Returns:
         (model, idx2char) ready to pass to `read_plate`.
-    """
-    from tensorflow import keras
 
+    Raises:
+        FileNotFoundError: if the class map is missing. Checked BEFORE
+            TensorFlow is imported - the classmap-existence check is a cheap
+            path lookup with no reason to depend on an ML runtime being
+            installed at all, and it means this failure mode is testable
+            (and reachable) on a machine that has no TensorFlow.
+    """
     from anpr.data.labels import load_class_map
 
     model_path = Path(model_path)
@@ -180,5 +185,9 @@ def load_reader(model_path: str | Path, classmap_path: str | Path | None = None)
             "model without it: the outputs are integers, and only the class "
             "map says which character each integer means. See ML-46."
         )
+
+    from tensorflow import keras   # deferred: only needed once we know the
+                                   # class map exists and there is a real
+                                   # model to load
 
     return keras.models.load_model(model_path), load_class_map(classmap_path)

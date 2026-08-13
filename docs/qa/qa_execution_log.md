@@ -33,10 +33,15 @@ the date, and a date written from memory is not evidence.
 | **N/A** | Does not apply. Justify |
 
 **One rule that matters:** evidence produced by the Week-1 Colab notebook does **not** count
-as PASS. The modules were refactored during the repo restructure (globals became
-parameters), and `scripts/prepare_data.py` has never been executed. Those criteria are
-PENDING with the Week-1 observation recorded as *expected* result — which makes any
-disagreement on first run visible rather than invisible.
+as PASS — the modules were refactored during the repo restructure (globals became
+parameters). `scripts/prepare_data.py` was executed for real on 13 Aug (Thenmani,
+commit `f1d8eaa`), and Block A below is updated against that run, not the Week-1 notebook.
+
+**A concrete example of why this rule exists:** the Week-1 run's class-imbalance numbers
+(rarest class 'Q' at 0.80%, ratio 3.5x) do **not** match the 13 Aug run (rarest class 'K'
+at 0.725%, ratio **7.61x** — see `acceptance_record.md`). Different physical loads of
+EMNIST produce different stratified subsamples. Any document still citing the Week-1
+figures needs correcting — see the open action below.
 
 ---
 
@@ -46,19 +51,19 @@ Updated at each sync point.
 
 | Block | Total | PASS | PENDING | BLOCKED | FAIL |
 |---|---:|---:|---:|---:|---:|
-| A — Data integrity & input contract | 10 | 4 | 6 | 0 | 0 |
+| A — Data integrity & input contract | 10 | 9 | 1 | 0 | 0 |
 | B — Character classification | 7 | 1 | 6 | 0 | 0 |
 | C — Segmentation | 8 | 0 | 0 | 8 | 0 |
 | D — End-to-end plate read | 7 | 3 | 0 | 4 | 0 |
-| E — Trust threshold & business policy | 7 | 3 | 3 | 1 | 0 |
+| E — Trust threshold & business policy | 7 | 4 | 2 | 1 | 0 |
 | F — Demo & reproducibility | 9 | 3 | 1 | 5 | 0 |
-| G — Edge & negative cases | 12 | 1 | 1 | 10 | 0 |
+| G — Edge & negative cases | 12 | 3 | 0 | 9 | 0 |
 | H — Reporting & submission compliance | 8 | 1 | 7 | 0 | 0 |
-| **Total** | **68** | **16** | **24** | **28** | **0** |
+| **Total** | **68** | **24** | **17** | **27** | **0** |
 
-**Read this as: 16 verified, 28 waiting on code that does not exist yet.** The blocked
+**Read this as: 24 verified, 27 waiting on code that does not exist yet.** The blocked
 count falls sharply once ML-37 (plate generator) and ML-43 (segmentation) land — those two
-tickets gate 28 of the 68 criteria between them.
+tickets gate 27 of the 68 criteria between them.
 
 ---
 
@@ -67,6 +72,7 @@ tickets gate 28 of the 68 criteria between them.
 | Date | Command | Result | Notes |
 |---|---|---|---|
 | 12 Aug 2026 | `pytest` | **42 passed** | Clean run, no TensorFlow installed locally — TF-dependent paths untested |
+| 13 Aug 2026 | `pytest` | **53 passed** | +11 new (`test_emnist.py`, `test_inference.py`) closing CA-A3, CA-E1, CA-G5, CA-G7. Same TF caveat holds |
 | | | | |
 
 > TensorFlow is not installed on the QA machine. Every test in the suite avoids it via lazy
@@ -81,17 +87,18 @@ tickets gate 28 of the 68 criteria between them.
 |---|---|---|---|---|---|
 | CA-A1 | HARD | **PASS** | 12 Aug | `tests/test_orientation.py::test_rejects_transposed_glyphs` | Synthetic glyphs; guard raises as specified |
 | CA-A2 | HARD | **PASS** | 12 Aug | `tests/test_orientation.py::test_prove_guard_fires_passes_on_good_data` | The guard is proven to fire |
-| CA-A3 | HARD | PENDING | | | Week-1 expected: rejects a 129,461-row file against 697,932. **No automated test — write one** |
+| CA-A3 | HARD | **PASS** | 13 Aug | `tests/test_emnist.py::test_truncated_file_is_rejected`, `test_error_names_actual_and_expected_row_counts`, `test_sufficient_rows_pass_the_gate`, `test_exactly_at_threshold_is_accepted` | 4 tests: below/at/above the 95% threshold, plus the error message is actionable |
 | CA-A4 | HARD | **PASS** | 12 Aug | `tests/test_contract.py::test_normalize_refuses_float_input` | Double-normalisation blocked |
 | CA-A5 | HARD | **PASS** | 12 Aug | `tests/test_contract.py::test_canonicalises_any_input_shape` | 5 input shapes covered |
-| CA-A6 | HARD | PENDING | | | Week-1 expected: overlap 0. Needs `prepare_data.py` |
-| CA-A7 | HARD | PENDING | | | Week-1 expected: max drift 0.003 pp val, 0.149 pp test |
-| CA-A8 | REPORT | PENDING | | | Week-1 expected: 0 duplicates across all pairs |
-| CA-A9 | HARD | PENDING | | | Needs a run to produce `provenance.json` |
-| CA-A10 | HARD | PENDING | | | Requires two runs on different machines to compare fingerprints |
+| CA-A6 | HARD | **PASS** | 13 Aug | `artifacts/provenance/split_manifest.json` (Thenmani, `f1d8eaa`) | train/val index overlap = 0 |
+| CA-A7 | HARD | **PASS** | 13 Aug | same file | max drift: val 0.0025 pp, test 0.2005 pp — well under the 0.5 pp gate |
+| CA-A8 | REPORT | **PASS** | 13 Aug | same file | dup_train_test=2, dup_val_test=0, dup_train_val=0. The 2 train↔test duplicates are inherited from the EMNIST source files, not our split logic — see RN in the split report |
+| CA-A9 | HARD | **PASS** | 13 Aug | `artifacts/provenance/provenance.json` (Thenmani, `f1d8eaa`) | route `kaggle_csv` both splits, source URI, library version, content hash and load timestamp all present for train and test |
+| CA-A10 | HARD | PENDING | | | Two independent runs now exist (this one + an earlier local `tfds` run), but they used **different EMNIST routes**, so their fingerprints are expected to differ and this is not yet the reproducibility check the criterion asks for. Needs a second run on the **same route** (`kaggle_csv`) on a different machine to actually test CA-A10 |
 
-**Action:** CA-A3 has no automated test despite having caught a real failure in Week 1. It
-is the cheapest test in the project to add and the one with a proven track record.
+**Resolved:** CA-A3 now has 4 automated tests. `EXPECTED_N` and `_find_emnist_csv` are
+monkeypatched so the test uses tiny (40/95/96-row) files rather than generating anything
+EMNIST-scale — fast, and it exercises the exact guard that caught the real Week-1 failure.
 
 ---
 
@@ -150,7 +157,7 @@ the most common cause of "high validation accuracy, useless on real images".
 
 | CA | Gate | Status | Date | Evidence | Notes |
 |---|---|---|---|---|---|
-| CA-E1 | HARD | PENDING | | | `aggregate_confidence()` implemented, **no direct test** — add one |
+| CA-E1 | HARD | **PASS** | 13 Aug | `tests/test_inference.py::test_aggregate_confidence_is_the_minimum` (+2 more) | Confirms the minimum, not the mean, and that an empty read reports 0.0 |
 | CA-E2 | HARD | **PASS** | 12 Aug | `tests/test_metrics_and_business.py::test_threshold_sweep_finds_a_cheaper_policy...` | Full 0.00–1.00 sweep, 101 points |
 | CA-E3 | HARD | BLOCKED | | | ML-37 — needs the 400/400 calibration/reporting split |
 | CA-E4 | HARD | **PASS** | 12 Aug | `tests/test_metrics_and_business.py::test_matches_the_brief_30000_wrong_bills` | 30,660 vs the brief's "roughly 30,000" |
@@ -207,18 +214,18 @@ is a judgement call, recorded here rather than left implicit.
 | CA-G2 | REPORT | BLOCKED | | | ML-43 |
 | CA-G3 | REPORT | BLOCKED | | | ML-43 |
 | CA-G4 | HARD | BLOCKED | | | Needs a non-plate test image — prepare one Friday |
-| CA-G5 | HARD | BLOCKED | | | `read_plate()` raises `FileNotFoundError`; untested |
-| CA-G6 | HARD | BLOCKED | | | Needs an all-black / all-white test image |
-| CA-G7 | HARD | PENDING | | | `load_reader()` raises on a missing map — **no test yet** |
+| CA-G5 | HARD | **PASS** | 13 Aug | `tests/test_inference.py::test_read_plate_rejects_nonexistent_path`, `test_read_plate_rejects_corrupt_image_file` | Was marked BLOCKED — turned out not to be: the path check in `read_plate()` runs before segmentation is ever invoked, so ML-43 was never actually a dependency here |
+| CA-G6 | HARD | BLOCKED | | | Still genuinely blocked — needs `segment_characters()` (ML-43) to exist; an all-black/white image can't be tested until segmentation does something with it |
+| CA-G7 | HARD | **PASS** | 13 Aug | `tests/test_inference.py::test_load_reader_refuses_missing_classmap` (+1 more) | Found and fixed a real bug while writing this: `load_reader()` imported TensorFlow *before* the classmap-existence check, so this criterion was untestable (and the check itself unreachable) on any machine without TF installed. Reordered — the cheap path check now runs first |
 | CA-G8 | HARD | **PASS** | 12 Aug | `tests/test_labels.py::test_class_map_detects_a_reordered_charset` | Reordered charset refused |
 | CA-G9 | REPORT | BLOCKED | | | ML-50 |
 | CA-G10 | REPORT | BLOCKED | | | ML-42 |
 | CA-G11 | REPORT | BLOCKED | | | ML-52 with real data |
 | CA-G12 | REPORT | BLOCKED | | | ML-49 tier C |
 
-**Three cheap tests missing:** CA-G5, CA-G6 and CA-G7 need no new production code — only a
-test each. Worth 30 minutes total, and they are exactly the cases an instructor probes when
-handed the keyboard.
+**Resolved:** CA-G5 and CA-G7 now have tests (5 total, see above). CA-G6 remains genuinely
+blocked on ML-43 — it needs `segment_characters()` to exist, unlike G5 and G7 which turned
+out to be independent of it once actually investigated.
 
 ---
 
@@ -246,14 +253,15 @@ Ranked. Items 1–4 need no production code and can be done today.
 | # | Action | CA | Effort | Owner |
 |---|---|---|---|---|
 | ~~1~~ | ~~Grep for hardcoded Colab/Drive paths~~ | CA-F8 | done | Luis — see Finding QA-01 |
-| 2 | Add a test for a missing class map | CA-G7 | 10 min | Luis |
-| 3 | Add tests for unreadable file and uniform image | CA-G5, CA-G6 | 20 min | Luis |
-| 4 | Add a test for the truncated-file guard | CA-A3 | 20 min | Luis |
-| 5 | Add a direct test for `aggregate_confidence()` | CA-E1 | 10 min | Luis |
-| 6 | Run `prepare_data.py` and clear the six PENDING Block A rows | CA-A6 – CA-A10 | 30 min | Thenmani |
+| ~~2~~ | ~~Add a test for a missing class map~~ | CA-G7 | done | Luis — also fixed a real bug: `load_reader()` imported TF before this check |
+| ~~3~~ | ~~Add a test for an unreadable file~~ | CA-G5 | done | Luis — turned out independent of ML-43, see CA-G5 row |
+| ~~4~~ | ~~Add a test for the truncated-file guard~~ | CA-A3 | done | Luis — 4 tests, `tests/test_emnist.py` |
+| ~~5~~ | ~~Add a direct test for `aggregate_confidence()`~~ | CA-E1 | done | Luis — `tests/test_inference.py` |
+| ~~6~~ | ~~Run `prepare_data.py` and clear the Block A rows~~ | CA-A6 – CA-A9 | done | Thenmani, commit `f1d8eaa` |
 | 7 | Confirm clean clone on the other two machines | CA-H2 | 15 min | All three |
 | 8 | Write the CA-C4 centre-of-mass test **alongside** the code | CA-C4 | — | Luis |
-| 9 | Prepare hostile demo images (non-plate, all-black, corrupt) | CA-G4, G5, G6 | 15 min | Luis |
+| 9 | Prepare a hostile demo image (non-plate content, all-black) | CA-G4, G6 | 15 min | Luis — still genuinely needs ML-43 to run against |
+| 10 | Same-route rerun of `prepare_data.py` on a second machine, to actually test fingerprint reproducibility | CA-A10 | — | Team — needs someone with local `kaggle_csv` files on a different machine |
 
 ---
 

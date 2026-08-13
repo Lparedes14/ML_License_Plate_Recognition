@@ -277,7 +277,9 @@ And the result is not used to select any model or hyperparameter
 Given the confusion matrix from the character test set
 When per-class recall is computed
 Then a value is recorded for all 36 classes
-And rare classes are called out explicitly, in particular Q at ~0.80% of training data
+And rare classes are called out explicitly, in particular the rarest measured class
+    (see acceptance_record.md for the current figure — this shifts slightly between
+    EMNIST loads, so cite the committed run rather than a fixed number here)
 ```
 
 **CA-B4 · REPORT** — The CNN is compared against a baseline
@@ -686,8 +688,11 @@ Given per-class recall from the character test set
 When rare classes are inspected
 Then recall for Q is reported explicitly alongside its training share
 ```
-> Q is ~0.80% of EMNIST ByClass but ~2.78% of a uniform plate alphabet, so poor recall on Q
-> damages plate accuracy roughly three times more than its training frequency suggests.
+> Q is ~0.79% of our EMNIST subsample (`artifacts/provenance/acceptance_record.md`) but
+> ~2.78% of a uniform plate alphabet, so poor recall on Q damages plate accuracy roughly
+> 3.5x more than its training frequency suggests. This Q-vs-uniform ratio is separate from
+> the overall imbalance ratio (rarest-vs-commonest class), which is currently 7.61x — see
+> the note on CA-B3.
 
 **CA-G11 · REPORT** — Degenerate policies are visible on the curve
 ```gherkin

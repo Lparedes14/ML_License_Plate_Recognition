@@ -50,8 +50,9 @@ truth.* — ML-28
   remember; the guard has a self-test proving it fires.
 - **Case handling.** merge vs drop — state which, and the measured cost of
   the other.
-- **Imbalance.** Q at ~0.80% vs N at ~2.82% against a near-uniform plate
-  alphabet. State the strategy and show both arms.
+- **Imbalance.** Measured against a near-uniform plate alphabet — rarest class
+  'K' at 0.725%, imbalance ratio 7.61x (`artifacts/provenance/acceptance_record.md`).
+  State the strategy and show both arms.
 - **Test set.** Programmatically rendered plates at three quality tiers.
   Ground truth is free; §11 (consent) is satisfied by construction.
 
