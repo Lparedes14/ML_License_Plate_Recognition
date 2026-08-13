@@ -1,0 +1,268 @@
+{
+  "orientation_verified": true,
+  "train": {
+    "route": "kaggle_csv",
+    "library": "pandas 3.0.5",
+    "uri": "local CSV (kaggle:crawford/emnist) -> C:\\FIU-MSIS\\ML-FinalProject\\ML_License_Plate_Recognition\\data\\raw\\emnist-byclass-train.csv",
+    "prefiltered": true,
+    "n_loaded": 220000,
+    "raw_classes": 62,
+    "transpose_applied": true,
+    "orientation_mode": "auto",
+    "subsample": "stratified",
+    "orientation_report": {
+      "1": {
+        "spread_y": 6.138242806906699,
+        "spread_x": 2.948316367768379,
+        "top": 0.4885503649711609,
+        "bottom": 0.5114496350288391,
+        "n": 12143,
+        "aspect": 2.081948488978752
+      },
+      "T": {
+        "spread_y": 5.831975448128933,
+        "spread_x": 5.127816190197269,
+        "top": 0.7143114805221558,
+        "bottom": 0.2856884300708771,
+        "n": 3160
+      },
+      "L": {
+        "spread_y": 6.156687600744062,
+        "spread_x": 4.9066070648749305,
+        "top": 0.30490273237228394,
+        "bottom": 0.6950973272323608,
+        "n": 1660
+      }
+    },
+    "seconds": 60.1,
+    "attempts_before_success": [],
+    "sha256_first_2k": "fcbe50e6825a945e",
+    "sha256_orig_idx": "57e33719499c8179",
+    "loaded_at_utc": "2026-08-13T01:30:28+00:00"
+  },
+  "test": {
+    "route": "kaggle_csv",
+    "library": "pandas 3.0.5",
+    "uri": "local CSV (kaggle:crawford/emnist) -> C:\\FIU-MSIS\\ML-FinalProject\\ML_License_Plate_Recognition\\data\\raw\\emnist-byclass-test.csv",
+    "prefiltered": true,
+    "n_loaded": 60000,
+    "raw_classes": 62,
+    "transpose_applied": true,
+    "orientation_mode": "auto",
+    "subsample": "stratified",
+    "orientation_report": {
+      "1": {
+        "spread_y": 6.147335374191289,
+        "spread_x": 2.962789775129009,
+        "top": 0.4883703589439392,
+        "bottom": 0.5116296410560608,
+        "n": 3255,
+        "aspect": 2.0748469654495194
+      },
+      "T": {
+        "spread_y": 5.78477933931788,
+        "spread_x": 5.147595136099034,
+        "top": 0.7183826565742493,
+        "bottom": 0.2816174030303955,
+        "n": 822
+      },
+      "L": {
+        "spread_y": 6.187818011326053,
+        "spread_x": 4.957072929981763,
+        "top": 0.303606778383255,
+        "bottom": 0.6963931918144226,
+        "n": 402
+      }
+    },
+    "seconds": 6.3,
+    "attempts_before_success": [],
+    "sha256_first_2k": "bda03cba5be30971",
+    "sha256_orig_idx": "2299a7dd7947a186",
+    "loaded_at_utc": "2026-08-13T01:30:34+00:00"
+  },
+  "guard_calibration": [
+    {
+      "test": "'1' tall-not-wide",
+      "observed": 2.081948488978752,
+      "transposed_counterfactual": 0.48031928037303434,
+      "current_threshold": 1.25,
+      "suggested_threshold": 1.0,
+      "headroom_x": 1.67,
+      "separation_x": 4.3
+    },
+    {
+      "test": "'T' top-heavy",
+      "observed": 2.500316447344195,
+      "transposed_counterfactual": 1.6084121732947998,
+      "current_threshold": 1.05,
+      "suggested_threshold": 2.005,
+      "headroom_x": 2.38,
+      "separation_x": 1.6
+    },
+    {
+      "test": "'L' bottom-heavy",
+      "observed": 2.279734661031677,
+      "transposed_counterfactual": 0.49023962019764317,
+      "current_threshold": 1.05,
+      "suggested_threshold": 1.057,
+      "headroom_x": 2.17,
+      "separation_x": 4.7
+    }
+  ],
+  "class_distribution": {
+    "n_samples": 220000,
+    "per_class_count": {
+      "0": 10990,
+      "1": 12143,
+      "2": 10779,
+      "3": 11114,
+      "4": 10499,
+      "5": 9830,
+      "6": 10790,
+      "7": 11219,
+      "8": 10714,
+      "9": 10637,
+      "A": 5206,
+      "B": 2842,
+      "C": 4108,
+      "D": 4712,
+      "E": 9247,
+      "F": 3705,
+      "G": 1952,
+      "H": 3716,
+      "I": 4540,
+      "J": 1787,
+      "K": 1596,
+      "L": 6533,
+      "M": 3650,
+      "N": 6220,
+      "O": 8734,
+      "P": 3384,
+      "Q": 1747,
+      "R": 6006,
+      "S": 7414,
+      "T": 8929,
+      "U": 4834,
+      "V": 2447,
+      "W": 2331,
+      "X": 1797,
+      "Y": 2192,
+      "Z": 1656
+    },
+    "per_class_share": {
+      "0": 0.04995,
+      "1": 0.0552,
+      "2": 0.049,
+      "3": 0.05052,
+      "4": 0.04772,
+      "5": 0.04468,
+      "6": 0.04905,
+      "7": 0.051,
+      "8": 0.0487,
+      "9": 0.04835,
+      "A": 0.02366,
+      "B": 0.01292,
+      "C": 0.01867,
+      "D": 0.02142,
+      "E": 0.04203,
+      "F": 0.01684,
+      "G": 0.00887,
+      "H": 0.01689,
+      "I": 0.02064,
+      "J": 0.00812,
+      "K": 0.00725,
+      "L": 0.0297,
+      "M": 0.01659,
+      "N": 0.02827,
+      "O": 0.0397,
+      "P": 0.01538,
+      "Q": 0.00794,
+      "R": 0.0273,
+      "S": 0.0337,
+      "T": 0.04059,
+      "U": 0.02197,
+      "V": 0.01112,
+      "W": 0.0106,
+      "X": 0.00817,
+      "Y": 0.00996,
+      "Z": 0.00753
+    },
+    "rarest_char": "K",
+    "rarest_share": 0.00725,
+    "commonest_char": "1",
+    "commonest_share": 0.0552,
+    "imbalance_ratio": 7.61,
+    "uniform_share_would_be": 0.02778
+  },
+  "splits": {
+    "train_val_index_overlap": 0,
+    "conservation": "ok",
+    "dup_train_test": 2,
+    "dup_val_test": 0,
+    "dup_train_val": 0,
+    "max_val_deviation_pp": 0.0025,
+    "max_test_deviation_pp": 0.2005,
+    "seed": 42,
+    "sha256_train_idx": "9db2fa4935920435",
+    "n_train": 198000,
+    "sha256_val_idx": "a3903d285f1362e0",
+    "n_val": 22000,
+    "sha256_test_idx": "2299a7dd7947a186",
+    "n_test": 60000
+  },
+  "config": {
+    "seed": 42,
+    "data": {
+      "n_train_max": 220000,
+      "n_test_max": 60000,
+      "val_fraction": 0.1,
+      "img_size": 28,
+      "n_classes": 36,
+      "imbalance_strategy": "weighted",
+      "case_strategy": "merge"
+    },
+    "training": {
+      "batch_size": 256,
+      "epochs_mlp": 6,
+      "epochs_cnn": 18,
+      "epochs_ft": 6,
+      "lr": 0.001,
+      "lr_ft": 0.0002,
+      "early_stopping_patience": 4
+    },
+    "plates": {
+      "plate_len": 7,
+      "n_eval_plates": 400,
+      "excluded_chars": "",
+      "tiers": {
+        "A": {
+          "blur_sigma": 0.0,
+          "noise_std": 0.0,
+          "rotation_deg": 0.0,
+          "contrast": 1.0
+        },
+        "B": {
+          "blur_sigma": 0.8,
+          "noise_std": 0.03,
+          "rotation_deg": 3.0,
+          "contrast": 0.8
+        },
+        "C": {
+          "blur_sigma": 1.8,
+          "noise_std": 0.08,
+          "rotation_deg": 8.0,
+          "contrast": 0.55
+        }
+      }
+    },
+    "business": {
+      "vehicles_per_day": 4200,
+      "cost_per_dispute": 8.5,
+      "dispenser_capex": 14000,
+      "n_sites": 34,
+      "cost_per_manual_review": 1.2
+    },
+    "_config_path": "C:\\FIU-MSIS\\ML-FinalProject\\ML_License_Plate_Recognition\\config\\default.yaml"
+  },
+  "seed": 42
+}
