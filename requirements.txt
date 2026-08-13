@@ -19,8 +19,13 @@ tensorflow>=2.15
 pyyaml>=6.0
 
 # --- optional: EMNIST download route (see src/anpr/data/emnist.py) ---------
+# torchvision's route depends on a NIST mirror whose TLS cert has been
+# expired since at least 2026-08 (fails regardless of local trust store).
+# tensorflow-datasets pulls from a different mirror and is the route that
+# actually succeeds today.
 torch>=2.0
 torchvision>=0.15
+tensorflow-datasets>=4.9
 
 # --- optional: demo interface (ML-47) --------------------------------------
 streamlit>=1.30

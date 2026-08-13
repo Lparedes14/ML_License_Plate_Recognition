@@ -39,10 +39,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# The EMNIST torchvision download route. Optional because the local-CSV route
-# works without it - but it is the route that actually succeeded for us when
-# the Kaggle CSV turned out to be truncated, so most people will want it.
-download = ["torch>=2.0", "torchvision>=0.15"]
+# The EMNIST download routes. Optional because the local-CSV route works
+# without them - but neither the Kaggle CSV nor the NIST mirror behind
+# torchvision can be relied on (the NIST mirror's TLS cert has been expired
+# since at least 2026-08; torchvision.datasets.EMNIST will fail with
+# CERTIFICATE_VERIFY_FAILED regardless of local trust store). tfds pulls
+# from a different mirror and is the route that actually succeeds today.
+download = ["torch>=2.0", "torchvision>=0.15", "tensorflow-datasets>=4.9"]
 
 # The demo interface (ML-47). Kept optional so `pip install -e .` stays light
 # for teammates who are only training models.

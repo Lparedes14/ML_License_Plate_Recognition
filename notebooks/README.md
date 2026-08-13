@@ -14,15 +14,25 @@ notebook, it belongs in `src/anpr/` — move it there and import it. Two people
 editing the same notebook produces merge conflicts that are effectively
 unresolvable; two people editing different modules does not.
 
-## Planned notebooks
+## Notebooks
 
-| Notebook | Purpose | Ticket |
-|---|---|---|
-| `00_spike.ipynb` | The spike experiment — throwaway by design | ML-33/34/35 |
-| `01_data_acceptance.ipynb` | Plots the 10 upright samples, class balance, split proportions | ML-36, ML-39 |
-| `02_training.ipynb` | Training curves, `model.summary()` | ML-42 |
-| `03_results.ipynb` | Every figure in `docs/results.md` | ML-51 |
-| `04_demo.ipynb` | Colab demo — accepts an uploaded image | ML-47 |
+| Notebook | Purpose | Ticket | Status |
+|---|---|---|---|
+| `spike_segmentation.py` | Spike: can connected components segment plates? Throwaway by design — a script, not a notebook, because it is not meant to be kept | ML-34 | **built** |
+| `01_data_acceptance.ipynb` | Ten upright samples, class balance, split proportions | ML-36, ML-39 | to build |
+| `03_results.ipynb` | Every figure in `docs/results.md` | ML-51 | to build |
+| `04_demo.ipynb` | Colab demo — accepts an uploaded image | ML-47 | to build |
+
+### Training happens in Colab, independently of this repo's notebook set
+
+Thenmani trains the model directly in a Google Colab kernel and downloads the resulting
+`.keras` file. That file (plus its `.classmap.json`) is what lands in `artifacts/models/`
+and is what `src/anpr/inference/load_reader()` picks up locally — everything after training
+(segmentation, evaluation, the demo) runs in VS Code against the downloaded model.
+
+There is deliberately no `02_training.ipynb` in this repo: an earlier version of the plan
+called for one, but the team's actual workflow doesn't route through it, so it was dropped
+rather than kept as a file nobody runs.
 
 ## Running in Colab
 

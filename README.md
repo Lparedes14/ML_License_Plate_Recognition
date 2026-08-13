@@ -132,7 +132,21 @@ fine-tuning data and the entire results section.
 |---|---|
 | [`docs/approach.md`](docs/approach.md) | Approach document (30 pts) |
 | [`docs/spike.md`](docs/spike.md) | Spike write-up (10 pts) |
-| [`docs/results.md`](docs/results.md) | Results summary |
+| [`docs/results.md`](docs/results.md) | Results summary — what we measured |
 | [`docs/business_note.md`](docs/business_note.md) | Business note |
 | [`docs/ai_disclosure.md`](docs/ai_disclosure.md) | AI usage appendix (§6) |
 | `docs/contributions/` | Individual statements (private) |
+
+## QA
+
+Two documents, distinct jobs. The first says what "successful" means and was written
+**before** anything was measured; the second records what actually happened when each
+criterion was run.
+
+| File | Purpose |
+|---|---|
+| [`docs/qa/qa_acceptance_criteria.md`](docs/qa/qa_acceptance_criteria.md) | 68 acceptance criteria in Gherkin across 8 blocks, traced to Jira |
+| [`docs/qa/qa_execution_log.md`](docs/qa/qa_execution_log.md) | When each criterion was run, the result, and the evidence file |
+
+Block H of the criteria document doubles as the pre-submission checklist — every row maps
+to a stated deduction.

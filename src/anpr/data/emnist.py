@@ -236,10 +236,22 @@ def _load_tfds(split: str, max_items: int | None, seed: int = 42):
     }
 
 
+# Order matters. Local CSV first (no network, fastest, reproducible for a demo),
+# then tfds, then torchvision LAST.
+#
+# torchvision was our primary route in Week 1 and is now the fallback of last
+# resort: it downloads from the NIST mirror, whose TLS certificate has been
+# expired since at least August 2026, so it fails with CERTIFICATE_VERIFY_FAILED
+# regardless of the local trust store. tfds pulls from a different mirror and is
+# the route that actually succeeds today.
+#
+# Keeping torchvision in the list rather than deleting it: if NIST renews the
+# certificate it starts working again, and the provenance record shows which
+# route was actually used either way.
 ROUTES: list[tuple[str, Callable]] = [
     ("kaggle_csv", _load_kaggle_csv),
-    ("torchvision", _load_torchvision),
     ("tfds", _load_tfds),
+    ("torchvision", _load_torchvision),
 ]
 
 
