@@ -278,31 +278,52 @@ whitespace is compared, and a wrong character *count* is classified as a
 segmentation failure, never as a near-miss recognition error.
 
 **Three metrics, three tiers, every number conditioned.** Measured on 400
-synthetic plates per tier, same plate strings across all three tiers (only
-image quality differs, so a tier cannot score worse purely for having drawn
-harder characters):
+persisted synthetic plates per tier (`data/generated/`, one consistent
+monospace font, manifest-verified ground truth), run through the actual
+committed pipeline code — not a notebook approximation:
 
 | Tier | n | Segmentation success | Character accuracy | Plate accuracy |
 |---|---:|---:|---:|---:|
-| Clean | 400 | 82.2% | 92.8% | 57.2% |
-| Normal | 400 | 53.2% | 94.0% | 35.5% |
-| Hard | 400 | 9.8% | 92.3% | 5.2% |
+| Clean | 400 | 93.0% | 95.3% | 65.8% |
+| Normal | 400 | 67.5% | 96.5% | 51.7% |
+| Hard | 400 | 10.0% | 96.8% | 7.8% |
+
+**A methodology limitation, stated rather than hidden:** the three tiers
+draw *independently random* plate text rather than the same 400 strings
+re-rendered at three quality levels. The original design intent — same
+characters, only image quality differing, so no tier can score worse purely
+for having drawn harder characters — is not fully met by the current
+persisted test set. The finding below is still credible (character accuracy
+is stable across tiers regardless, which is the opposite of what a
+draw-difficulty confound would produce), but a stricter version of this
+experiment would fix the same 400 strings across all three tiers.
+
+**A finding worth reporting on its own: font consistency measurably helps.**
+An earlier run using randomly-selected system fonts (several italic)
+measured 82.2% / 53.2% / 9.8% segmentation and 92.8% / 94.0% / 92.3%
+character accuracy at the same three tiers. Switching to one consistent
+monospace font — closer to a real plate typeface, and the fix required by
+ML-37 — improved segmentation by +11pp (Clean) and +14pp (Normal), and
+character accuracy by +2 to +5pp across the board. Hard tier barely moved
+(9.8% → 10.0%): at that level of blur and noise, font choice stops
+mattering — the image itself is the limiting factor, not the typeface.
 
 **Why plate accuracy is so much lower than character accuracy — and why the
 gap widens with degradation.** If segmentation were perfect, plate accuracy
-would be bounded above by character-accuracy⁷: roughly 59% at Clean, 65% at
-Normal, 57% at Hard. At Clean, measured plate accuracy (57.2%) sits close to
-that bound — segmentation is mostly working (82.2%), so the character-level
-errors are what's limiting the plate-level number. At Hard, the story is
-different: the bound predicts ~57%, but measured plate accuracy is 5.2% —
-a gap almost entirely explained by segmentation collapsing to 9.8%. **The
-classifier is not what breaks under degradation here; segmentation is.**
-That is the single most important sentence in this section, and it is the
-direct result of separating the two failure modes rather than reporting one
-blended "accuracy" number.
+would be bounded above by character-accuracy⁷: roughly 71% at Clean, 78% at
+Normal, 80% at Hard. At Clean, measured plate accuracy (65.8%) sits
+reasonably close to that bound — segmentation is mostly working (93.0%), so
+the character-level errors are most of what's limiting the plate-level
+number. At Hard, the story is completely different: the bound predicts
+~80%, but measured plate accuracy is 7.8% — a gap almost entirely explained
+by segmentation collapsing to 10.0%. **The classifier barely degrades at
+all under harsh conditions (95.3% → 96.8%, if anything slightly higher);
+segmentation is what breaks.** That is the single most important sentence
+in this section, and it is the direct result of separating the two failure
+modes rather than reporting one blended "accuracy" number.
 
-**A caveat worth stating plainly:** the Hard tier's 92.3% character accuracy
-is computed over only the ~39 plates (9.8% of 400) that happened to segment
+**A caveat worth stating plainly:** the Hard tier's 96.8% character accuracy
+is computed over only the 40 plates (10.0% of 400) that happened to segment
 correctly despite the degradation — a small, self-selected sample of the
 *easiest* hard-tier plates. It is not a reliable estimate of classifier
 performance under hard conditions, and we say so rather than report it bare.

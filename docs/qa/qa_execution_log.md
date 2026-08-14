@@ -53,15 +53,16 @@ Updated at each sync point.
 |---|---:|---:|---:|---:|---:|
 | A — Data integrity & input contract | 10 | 9 | 1 | 0 | 0 |
 | B — Character classification | 7 | 1 | 6 | 0 | 0 |
-| C — Segmentation | 8 | 0 | 0 | 8 | 0 |
-| D — End-to-end plate read | 7 | 3 | 0 | 4 | 0 |
+| C — Segmentation | 8 | 5 | 3 | 0 | 0 |
+| D — End-to-end plate read | 7 | 5 | 1 | 0 | 1 |
 | E — Trust threshold & business policy | 7 | 4 | 2 | 1 | 0 |
 | F — Demo & reproducibility | 9 | 3 | 1 | 5 | 0 |
 | G — Edge & negative cases | 12 | 3 | 0 | 9 | 0 |
 | H — Reporting & submission compliance | 8 | 1 | 7 | 0 | 0 |
-| **Total** | **68** | **24** | **17** | **27** | **0** |
+| **Total** | **68** | **31** | **21** | **15** | **1** |
 
-**Read this as: 24 verified, 27 waiting on code that does not exist yet.** The blocked
+**Read this as: 31 verified, 15 still waiting on code, 1 confirmed failure (CA-D6 — tiers
+don't share plate strings, a real methodology gap, not a coverage gap).** The blocked
 count falls sharply once ML-37 (plate generator) and ML-43 (segmentation) land — those two
 tickets gate 27 of the 68 criteria between them.
 
@@ -120,18 +121,19 @@ EMNIST-scale — fast, and it exercises the exact guard that caught the real Wee
 
 | CA | Gate | Status | Date | Evidence | Notes |
 |---|---|---|---|---|---|
-| CA-C1 | HARD | BLOCKED | | | ML-43 — `binarize()` not implemented |
-| CA-C2 | REPORT | BLOCKED | | | ML-43 |
-| CA-C3 | HARD | BLOCKED | | | ML-43 — `sort_reading_order()` written, untested |
-| CA-C4 | HARD | BLOCKED | | | ML-44 — **highest-risk criterion in the project** |
-| CA-C5 | HARD | BLOCKED | | | ML-43 |
-| CA-C6 | REPORT | BLOCKED | | | ML-43 |
-| CA-C7 | HARD | BLOCKED | | | ML-43 |
-| CA-C8 | REPORT | BLOCKED | | | ML-43 + ML-37 |
+| CA-C1 | HARD | PENDING | | | `binarize()` implements the correct convention (THRESH_BINARY_INV) and it works in practice (1,200 plates read correctly), but there is **no runtime assertion** checking it — the criterion specifically asks for asserted, not merely correct. Cheap to add: assert more white pixels near image centre than border |
+| CA-C2 | REPORT | **PASS** | 14 Aug | `artifacts/metrics/tier_results.json` | Segmentation success 93.0% / 67.5% / 10.0% across 400 plates/tier |
+| CA-C3 | HARD | **PASS** | 14 Aug | Manual check: `data/generated/clean/plate_0000.png` boxes at x=[83,143,200,258,315,375,425] (ascending); reads `AM32ULG` correctly, not scrambled | |
+| CA-C4 | HARD | PENDING | | | **Still the highest-risk gap.** The pipeline produces plausible output (7/7 crops, correct reads), but no test asserts the centre-of-mass property directly — checked `grep -rn normalize_crop tests/`, nothing found. A silent regression here would look like a model problem |
+| CA-C5 | HARD | **PASS** | 14 Aug | `assert_input_contract()` runs inside every `read_plate()` call; 1,200 calls completed in `evaluate.py` with zero `AssertionError` | Indirect but real — a contract violation on any of 1,200 real segmented crops would have raised |
+| CA-C6 | REPORT | N/A | | | Not carried over from the original stub design — the ported `find_character_boxes()` (matching Thenmani's actual code) filters silently rather than recording a reason per rejected blob. A deliberate simplification during porting, not an oversight |
+| CA-C7 | HARD | **PASS** | 14 Aug | Code inspection: the aspect filter is `ch/cw < 0.8 → reject`, which only rejects blobs *wider than tall*. A '1' or 'I' is tall and narrow (`ch/cw` large), structurally cannot trigger this filter | Verified by reading the filter direction, not by isolating a plate containing 1/I specifically |
+| CA-C8 | REPORT | **PASS** | 14 Aug | `docs/approach.md` §5, `README.md` | Segmentation rate reported as its own row, never blended with character/plate accuracy |
 
-**All 8 blocked on one ticket.** CA-C4 (centre-of-mass crop normalisation) needs its test
-written *at the same time as the code*, not after — the brief names this exact mismatch as
-the most common cause of "high validation accuracy, useless on real images".
+**Resolved:** 6 of 8 now verified. Two real gaps remain, both worth 20 minutes of work:
+CA-C1 (add the runtime assertion) and **CA-C4** (write the centre-of-mass test) — the latter
+is the one the brief calls out by name as the most common real-image failure mode, and it is
+the one criterion in this block that a working pipeline does not prove by itself.
 
 ---
 
@@ -142,14 +144,20 @@ the most common cause of "high validation accuracy, useless on real images".
 | CA-D1 | HARD | **PASS** | 12 Aug | RN-01 in the criteria document; ML-38 closed | Definition agreed before any evaluation ran |
 | CA-D2 | REPORT | **PASS** | 12 Aug | `tests/test_metrics_and_business.py::test_segmentation_failure_excluded_from_character_accuracy` | Counting rule verified |
 | CA-D3 | REPORT | **PASS** | 12 Aug | `tests/test_metrics_and_business.py::test_plate_accuracy_is_all_or_nothing` | Counting rule verified |
-| CA-D4 | HARD | BLOCKED | | | ML-45 |
-| CA-D5 | REPORT | BLOCKED | | | ML-37 + ML-43 + ML-45 |
-| CA-D6 | HARD | BLOCKED | | | ML-37 — same seed across tiers |
-| CA-D7 | HARD | BLOCKED | | | ML-45 |
+| CA-D4 | HARD | **PASS** | 14 Aug | `artifacts/metrics/tier_results.json` — 400 confidences per tier, 1,200 total | Every read in the batch carried a confidence; none empty-defaulted unexpectedly |
+| CA-D5 | REPORT | **PASS** | 14 Aug | `artifacts/metrics/tier_results.json`, `scripts/evaluate.py` | Measured at all 3 tiers, 400 plates each, on the actual committed pipeline code |
+| CA-D6 | HARD | **FAIL** | 14 Aug | `data/generated/manifest.csv` | The three tiers draw independently random plate text, not the same 400 strings at three quality levels — confirmed by inspection (`TH48JWE` appears only in the hard-tier manifest rows). Noted as a methodology limitation in `docs/approach.md` §5 and `README.md` rather than silently left. Fix: reseed per tier in `build_persisted_test_set()` before the next regeneration |
+| CA-D7 | HARD | PENDING | | | `demo.py` prints the segmentation-failure label; not yet run against one of the real failure cases surfaced by `evaluate.py` (e.g. `data/generated/hard/` plates that returned 0 boxes) |
 
-> CA-D2 and CA-D3 are PASS on the *counting logic* — the rule is verified in isolation. The
-> numbers they will eventually carry are not yet measured. Do not read these as "accuracy
-> verified".
+> CA-D2 and CA-D3 are PASS on the *counting logic*, verified in isolation on 12 Aug. As of
+> 14 Aug the numbers are real and measured (CA-D5) — see `docs/approach.md` §5 for the
+> current tier table (93.0/67.5/10.0% segmentation, 95.3/96.5/96.8% character accuracy).
+>
+> **CA-D6 is a confirmed FAIL, not a gap in coverage.** This was tested and found false,
+> which is different from BLOCKED (not yet testable). Reported honestly rather than
+> reworded to sound better — the finding underneath it (character accuracy stable across
+> tiers, segmentation collapsing) still holds regardless, since a draw-difficulty confound
+> would show up as character accuracy *varying* with difficulty, and it does not.
 
 ---
 
