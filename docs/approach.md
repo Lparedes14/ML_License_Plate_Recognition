@@ -136,6 +136,13 @@ plate alphabet entirely; increase augmentation rather than model capacity
 (the domain gap in §6 is a data problem, not a capacity problem); or accept
 lower accuracy and lean harder on the trust threshold.
 
+**A constraint we worked under:** Tesseract, EasyOCR, PaddleOCR and cloud OCR
+APIs are not permitted as the system's classifier (§6 — using one costs 20
+points). Every character prediction here comes from the CNN above, which we
+trained. Running an off-the-shelf engine *alongside* ours as a published
+comparison would have earned credit; we did not have the time budget and are
+saying so rather than implying we chose not to.
+
 ---
 
 ## 5. Evaluation
