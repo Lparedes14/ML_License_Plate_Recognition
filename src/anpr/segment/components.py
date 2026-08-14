@@ -1,42 +1,29 @@
 """Plate image -> individual character crops.
 
-STATUS: NOT IMPLEMENTED. Owner: Pipeline. Tickets: ML-43, ML-13.
+Ported from `segment_plate()` and `to_mnist_format()` in
+`ML_Draft1_Project.ipynb` (Thenmani). Filters, thresholds and the
+normalisation recipe are hers, unchanged; the structural change is that the
+result is returned as a `SegmentationResult` rather than a bare tuple, so
+the character COUNT travels with the crops and failures can be counted
+separately (§4).
 
-THE RULE THAT SHAPES THIS WHOLE MODULE (§4)
+Ticket: ML-43, ML-44.
+
+THE RULE THAT SHAPES THIS MODULE (§4)
     "Segmentation failures and recognition failures are different bugs. If
-    your system reads a 6-character plate as 5 characters, that is not a
-    recognition error and no amount of retraining fixes it. Count them
-    separately from day one."
-
-    So `segment_characters` returns a SegmentationResult carrying how many
-    boxes it found, not just the crops. The evaluation harness compares that
-    count to the ground truth and reports segmentation success rate as its
-    own number (§5 requires it reported separately).
-
-PIPELINE
-    1. binarize        grayscale -> black/white           [binarize.py]
-    2. connected components on the binary image           [here]
-    3. filter blobs    drop noise, bolts, plate border    [here]
-    4. sort left-to-right - reading order is not detection order
-    5. normalise each crop to the input contract          [here]
-
-THE STEP THAT WILL COST YOU A DAY IF YOU GET IT WRONG
-    Step 5. EMNIST glyphs are centred by CENTRE OF MASS in a 20x20 box inside
-    a 28x28 field - that is how the original MNIST was built. If our crops are
-    instead stretched to fill 28x28, every glyph arrives at a different scale
-    and position from anything the model saw in training, and accuracy
-    collapses for a reason that looks like a model problem but is not.
-
-    §4 names this as the single most common cause of "57% validation accuracy,
-    unusable on real images". Implement `normalize_crop` to match EMNIST's
-    convention exactly, and write a test that asserts it.
+     your system reads a 6-character plate as 5 characters, that is not a
+     recognition error and no amount of retraining fixes it. Count them
+     separately from day one."
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+import cv2
 import numpy as np
+
+from anpr.segment.binarize import binarize, to_grayscale
 
 
 @dataclass
@@ -49,18 +36,13 @@ class SegmentationResult:
             drawing the boxes on the input image is the single most
             convincing thing to show a COO.
         n_found: Number of characters detected.
-        n_expected: Expected count, when known (ground truth, or the
-            jurisdiction's plate length). None if genuinely unknown.
-        rejected: Blobs discarded by filtering, with the reason. Do not throw
-            these away - "we dropped it as noise" is the explanation for a
-            failure you will otherwise be unable to account for live.
+        n_expected: Expected count, when known. None if genuinely unknown.
     """
 
     crops: np.ndarray
     boxes: list[tuple[int, int, int, int]] = field(default_factory=list)
     n_found: int = 0
     n_expected: int | None = None
-    rejected: list[dict] = field(default_factory=list)
 
     @property
     def count_matches(self) -> bool | None:
@@ -75,100 +57,139 @@ class SegmentationResult:
         return self.n_found == self.n_expected
 
 
-def find_character_boxes(
-    binary: np.ndarray,
-    min_area_ratio: float = 0.001,
-    max_area_ratio: float = 0.25,
-    min_aspect: float = 0.15,
-    max_aspect: float = 3.0,
-) -> tuple[list[tuple[int, int, int, int]], list[dict]]:
-    """Connected components, filtered down to plausible characters.
-
-    Use `cv2.connectedComponentsWithStats`. The filters exist because a real
-    plate image contains more than characters - mounting bolts, the plate
-    border, screw shadows, state names, registration stickers.
-
-    Every threshold below is a JUDGEMENT CALL that will need tuning against
-    your own generated plates. Tune them on tier A, then check they still hold
-    at tier C, and record what you chose. "We tuned min_area on tier B and it
-    cost us at tier C" is a good sentence for the results document.
-
-    Args:
-        binary: uint8 (H, W), 0 or 255, characters white on black.
-        min_area_ratio: Blobs smaller than this fraction of the image are
-            noise (specks, sensor dust).
-        max_area_ratio: Blobs larger than this are the plate border or
-            background bleed, not a character.
-        min_aspect: w/h below this is a vertical line - the plate edge.
-            Careful: '1' and 'I' are genuinely narrow, so setting this too
-            high silently deletes them from every plate. That is a bug that
-            looks like a recognition problem.
-        max_aspect: w/h above this is a horizontal rule.
-
-    Returns:
-        (boxes accepted, rejected blobs with a reason each).
-    """
-    raise NotImplementedError("ML-43: implement find_character_boxes().")
-
-
-def sort_reading_order(boxes: list[tuple[int, int, int, int]]) -> list[int]:
-    """Order boxes left-to-right.
-
-    Connected-component labelling returns blobs in an arbitrary order, so
-    without this the plate reads as a scramble of the right characters -
-    100% character accuracy and 0% plate accuracy, which is a confusing
-    result to debug at 2am.
-
-    Sorting by x alone is fine for a single-row plate. If you later support
-    two-row plates, cluster by y first, then sort by x within each row.
-
-    Args:
-        boxes: Unordered (x, y, w, h).
-
-    Returns:
-        Indices that put `boxes` into reading order.
-    """
-    return sorted(range(len(boxes)), key=lambda i: boxes[i][0])
-
-
 def normalize_crop(crop: np.ndarray) -> np.ndarray:
     """One character crop -> a 28x28 glyph matching EMNIST's convention.
 
-    THE EMNIST/MNIST PROCEDURE, which we must reproduce exactly:
-      1. tight-crop to the ink's bounding box
-      2. scale the longer side to 20 pixels, preserving aspect ratio
-         (preserving aspect is what stops a '1' being stretched into a '0')
-      3. paste into a 28x28 black field
-      4. shift so the ink's CENTRE OF MASS sits at the field centre -
+    THE PROCEDURE, which must match how the training data was built:
+      1. Otsu-threshold, then tight-crop to the ink's bounding box.
+      2. Scale the longer side to 20 pixels, preserving aspect ratio -
+         preserving aspect is what stops a '1' being stretched into a '0'.
+      3. Paste into a 28x28 black field.
+      4. Shift so the ink's CENTRE OF MASS sits at the field centre -
          centre of mass, NOT the bounding-box centre. They differ for
-         asymmetric glyphs like 'J' and 'L', and the model was trained on
-         centre-of-mass positioning.
+         asymmetric glyphs like 'J' and 'L', and EMNIST uses centre of mass.
+
+    §4 names mismatched preprocessing as the single most common cause of
+    "57% validation accuracy, unusable on real images". This function is
+    called by BOTH the segmentation path and the printed-glyph renderer in
+    `data/plates.py`, so there is only one recipe to keep in sync.
 
     Args:
-        crop: uint8 (h, w) character region cut from the binary image.
+        crop: uint8 (h, w) character region. White ink on black.
 
     Returns:
-        uint8 (28, 28, 1), ready for `contract.normalize`.
+        uint8 (28, 28).
     """
-    raise NotImplementedError(
-        "ML-44: implement normalize_crop() to EMNIST convention - 20x20 "
-        "aspect-preserved, centred by centre of mass in a 28x28 field. "
-        "Add a test asserting the centre of mass lands within one pixel of "
-        "(14, 14); this is the highest-value test in the repo."
+    g = cv2.threshold(crop, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+    ys, xs = np.where(g > 0)
+    if len(xs) == 0:
+        return np.zeros((28, 28), np.uint8)
+
+    g = g[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    h, w = g.shape
+    s = 20.0 / max(h, w)
+    g = cv2.resize(
+        g, (max(1, int(round(w * s))), max(1, int(round(h * s)))),
+        interpolation=cv2.INTER_AREA,
     )
+
+    canvas = np.zeros((28, 28), np.uint8)
+    h, w = g.shape
+    canvas[(28 - h) // 2:(28 - h) // 2 + h, (28 - w) // 2:(28 - w) // 2 + w] = g
+
+    m = cv2.moments(canvas)
+    if m["m00"] > 0:
+        dx, dy = 14 - m["m10"] / m["m00"], 14 - m["m01"] / m["m00"]
+        canvas = cv2.warpAffine(
+            canvas, np.float32([[1, 0, dx], [0, 1, dy]]), (28, 28)
+        )
+    return canvas
+
+
+def find_character_boxes(
+    binary: np.ndarray, plate_shape: tuple[int, int]
+) -> list[tuple[int, int, int, int]]:
+    """Contours, filtered down to plausible characters, in reading order.
+
+    The filters exist because a real plate image contains more than
+    characters - mounting bolts, the plate border, screw shadows. Every
+    threshold below is a judgement call tuned against our generated plates;
+    they are what makes segmentation work at all on the degraded tier (the
+    spike measured 100% exact with filtering vs 0% without).
+
+    Args:
+        binary: uint8 (H, W) binary mask, white ink on black.
+        plate_shape: (h, w) of the source plate, for relative thresholds.
+
+    Returns:
+        (x, y, w, h) boxes sorted left to right. Detection order from
+        `findContours` is arbitrary; without the sort a perfectly-read plate
+        comes back scrambled.
+    """
+    h, w = plate_shape
+    cnts, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    boxes = []
+    for c in cnts:
+        x, y, cw, ch = cv2.boundingRect(c)
+        if ch < 0.35 * h or ch > 0.98 * h:
+            continue                              # too small / whole-frame noise
+        if cw > 0.30 * w or cw < 0.008 * w:
+            continue                              # merged blobs / specks
+        if ch / max(cw, 1) < 0.8:
+            continue                              # glyphs are taller than wide
+        boxes.append((x, y, cw, ch))
+
+    boxes.sort(key=lambda b: b[0])
+    return boxes
 
 
 def segment_characters(
-    image: np.ndarray, n_expected: int | None = None, **kwargs
+    image: np.ndarray, n_expected: int | None = None, pad: int = 2
 ) -> SegmentationResult:
     """Full segmentation: plate image in, contract-compliant crops out.
 
     Args:
-        image: uint8 grayscale or RGB plate image, any size.
-        n_expected: Expected character count, if known.
-        **kwargs: Threshold overrides passed to `find_character_boxes`.
+        image: uint8 grayscale or RGB plate image.
+        n_expected: Expected character count, when known. Recorded on the
+            result so `count_matches` can flag a segmentation failure.
+
+            NOTE: this is recorded, NOT enforced. The notebook version
+            optionally truncated over-segmented results down to `expected`
+            by keeping the tallest boxes - convenient for a demo, but it
+            hides over-segmentation from the accuracy numbers. Measurement
+            has to see the raw blob count, so that truncation is deliberately
+            not carried over here.
+        pad: Pixels of padding around each box before normalisation.
 
     Returns:
-        A SegmentationResult.
+        A SegmentationResult. `crops` is an empty (0, 28, 28, 1) array when
+        nothing was found - never a fabricated character.
     """
-    raise NotImplementedError("ML-43: implement segment_characters().")
+    gray = to_grayscale(image)
+    h, w = gray.shape
+
+    binary = binarize(gray)
+    boxes = find_character_boxes(binary, (h, w))
+
+    crops = []
+    for x, y, cw, ch in boxes:
+        crop = gray[max(0, y - pad):min(h, y + ch + pad),
+                    max(0, x - pad):min(w, x + cw + pad)]
+        # 255 - crop inverts dark-glyph-on-light-plate to the white-on-black
+        # convention normalize_crop expects. SAME recipe as the training
+        # data - this is the integration trap §4 warns about.
+        crops.append(normalize_crop(255 - crop))
+
+    crops_arr = (
+        np.array(crops)[..., None] if crops
+        else np.zeros((0, 28, 28, 1), np.uint8)
+    )
+
+    return SegmentationResult(
+        crops=crops_arr,
+        boxes=boxes,
+        n_found=len(boxes),
+        n_expected=n_expected,
+    )

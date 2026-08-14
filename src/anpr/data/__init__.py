@@ -50,6 +50,18 @@ from anpr.data.labels import (
     resample_to_median,
     save_class_map,
 )
+from anpr.data.plates import (
+    PlateSample,
+    available_fonts,
+    build_persisted_test_set,
+    degrade,
+    load_test_set,
+    make_plate,
+    monospace_font,
+    random_plate_text,
+    render_font_glyphs,
+    render_plate,
+)
 from anpr.data.splits import make_splits, save_split_manifest, verify_splits
 
 __all__ = [
@@ -65,4 +77,8 @@ __all__ = [
     "save_class_map", "load_class_map",
     # splits
     "make_splits", "verify_splits", "save_split_manifest",
+    # plates
+    "PlateSample", "random_plate_text", "render_plate", "degrade", "make_plate",
+    "build_persisted_test_set", "load_test_set", "render_font_glyphs",
+    "available_fonts", "monospace_font",
 ]

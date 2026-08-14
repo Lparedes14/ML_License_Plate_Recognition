@@ -11,7 +11,12 @@ reporting accuracy without stating conditions a -5 deduction, which is why
 `EvalResult.to_sentence()` always includes the tier and the sample size.
 """
 
-from anpr.evaluate.conditions import evaluate_all_tiers, save_results
+from anpr.evaluate.conditions import (
+    TierResult,
+    evaluate_all_tiers,
+    evaluate_tier,
+    save_results,
+)
 from anpr.evaluate.confusion import (
     check_predicted_confusions,
     confusion_matrix,
@@ -24,5 +29,5 @@ __all__ = [
     "EvalResult", "character_accuracy", "evaluate_reads",
     "confusion_matrix", "top_confusions", "check_predicted_confusions",
     "per_class_accuracy",
-    "evaluate_all_tiers", "save_results",
+    "TierResult", "evaluate_tier", "evaluate_all_tiers", "save_results",
 ]

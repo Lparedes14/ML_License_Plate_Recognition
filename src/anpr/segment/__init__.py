@@ -1,9 +1,9 @@
 """Segmentation - plate image to character crops.
 
-Owner: Pipeline role (§7). Tickets: ML-43, ML-13.
+Owner: Pipeline role (§7). Tickets: ML-43, ML-44.
 
-    binarize.py    grayscale -> clean black/white     [NOT IMPLEMENTED]
-    components.py  connected components -> crops      [NOT IMPLEMENTED]
+    binarize.py    grayscale -> clean black/white (Otsu, inverted)
+    components.py  contours -> filtered boxes -> EMNIST-normalised crops
 
 REMEMBER: a segmentation failure is NOT a recognition failure. Count them
 separately from day one (§4). `SegmentationResult.count_matches` is how.
@@ -15,11 +15,10 @@ from anpr.segment.components import (
     find_character_boxes,
     normalize_crop,
     segment_characters,
-    sort_reading_order,
 )
 
 __all__ = [
     "to_grayscale", "binarize",
-    "SegmentationResult", "find_character_boxes", "sort_reading_order",
+    "SegmentationResult", "find_character_boxes",
     "normalize_crop", "segment_characters",
 ]

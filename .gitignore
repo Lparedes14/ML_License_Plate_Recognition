@@ -23,10 +23,18 @@ env/
 data/raw/*
 !data/raw/.gitkeep
 !data/raw/README.md
+# Generated plates: 1,200 PNGs, regenerable via scripts/make_test_plates.py.
+# The IMAGES stay out of git - but manifest.csv is committed, because it is
+# the ground truth every reported accuracy number was measured against.
+# Without it, tier_results.json cannot be audited by anyone.
 data/generated/*
 !data/generated/.gitkeep
+!data/generated/manifest.csv
 emnist_data/
 *.csv
+# ...but the plate manifest is evidence, so it overrides the blanket *.csv
+# rule above. Order matters here: a later negation wins in .gitignore.
+!data/generated/manifest.csv
 *.zip
 *.gz
 *.idx*-ubyte
