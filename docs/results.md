@@ -1,91 +1,162 @@
 # Results Summary
 
-**Ticket ML-51 · 2 pages · Metrics, conditions, confusion analysis, failure modes**
+**Ticket ML-51 · Group 8 · ANPR prototype**
 
-> **Template — not yet written.** Fill from
-> `artifacts/metrics/tier_results.json` and `artifacts/metrics/confusion.json`.
-> Quote the generated files; do not retype numbers by hand.
->
-> §1: *"A team reporting 61% character accuracy with a clear-eyed analysis of
-> why will score higher than a team claiming 99% they cannot reproduce on a
-> new image."*
+*Every number here comes from `ML_FinalProject_Group_8.ipynb` and is mirrored
+in `artifacts/provenance/provenance.json`. Nothing is retyped from memory.*
 
 ---
 
-## Headline numbers
+## Conditions — read these before any number below
 
-Every row states its conditions. A number without a tier and a sample size is
-a −5 deduction.
+All plate-level figures are measured on **synthetically rendered plates**,
+never photographs. No licensed plate corpus was used (§11: plate numbers are
+personal data). Three degradation levels, reported separately:
 
-| Tier | Conditions | n | Character acc. | Plate acc. | Segmentation |
-|---|---|---|---|---|---|
-| A | clean, straight-on, high contrast | | | | |
-| B | realistic camera capture | | | | |
-| C | motion blur, low light, steep angle | | | | |
+| Tier | Skew | Blur | Lighting | Noise |
+|---|---|---|---|---|
+| **clean** | none | none | uniform | none |
+| **normal** | 4.5% perspective | 3px Gaussian (70% of images) | gradient | σ=8 |
+| **hard** | 8.5% perspective | 5px Gaussian | stronger gradient | σ=18 |
 
-**Model:** … **Trained on:** … samples · **Validated on:** … · **Seed:** 42
-
----
-
-## Why plate accuracy is so much lower than character accuracy
-
-A plate is correct only when every character is. At *p* per character over 7
-characters the ceiling is *p*⁷ — 0.95⁷ = 70%, 0.90⁷ = 48%. Our measured plate
-accuracy is (higher / lower) than that bound because errors are (correlated /
-independent) — a blurry plate is blurry for all seven characters.
+400 plates per tier, 7 characters each, fixed seed.
 
 ---
 
-## Segmentation vs recognition
+## 1. Character classifier — held-out EMNIST (handwritten)
 
-Counted separately from day one, as §4 requires.
+| Model | Test accuracy | Macro F1 | Parameters |
+|---|---:|---:|---:|
+| Baseline MLP (control) | 0.841 | — | 542,500 |
+| **CNN** | **0.901** | **0.898** | 592,964 |
 
-| Failure type | Count | Share |
-|---|---|---|
-| Segmentation (wrong character count) | | |
-| Recognition (right count, wrong character) | | |
-
----
-
-## Confusion analysis — ML-50
-
-We pre-registered `CONFUSABLE_PAIRS` in `anpr/config.py` before training. How
-did the prediction hold up?
-
-| Pair | Predicted? | Confusions | Rate |
-|---|---|---|---|
-
-**Per-class recall:** watch Q, which is ~0.8% of EMNIST but ~2.8% of a
-uniform plate alphabet.
-
-**Recommendation:** if confusion concentrates on I/1, O/0 and Q/O, ask
-Meridian to exclude those three from issued plates — it costs nothing and
-beats any amount of retraining.
+The MLP exists to make the CNN's number mean something: 6 points of accuracy
+for 9% more parameters is the value of spatial structure, not of scale.
 
 ---
 
-## Failure modes
+## 2. End-to-end pipeline, by condition
 
-Named without being asked (§10).
+| Condition | Segmentation | Character | Plate |
+|---|---:|---:|---:|
+| clean | 0.955 | 0.843 | 0.502 |
+| normal | 0.730 | 0.624 | 0.340 |
+| hard | 0.122 | 0.109 | 0.055 |
 
-1.
-2.
-3.
+**Segmentation and recognition are reported separately because they are
+different bugs with different fixes.** Blending them into one "accuracy"
+number would hide the finding below.
+
+### The headline finding
+
+On 400 hard-condition plates:
+
+| Failure type | Count |
+|---|---:|
+| **Segmentation** (wrong character count) | **351** |
+| **Recognition** (right count, wrong text) | **27** |
+
+**Segmentation is the bottleneck by a factor of thirteen.** Better training
+data would barely move the hard-tier number; the pipeline never gets far
+enough to ask the classifier. The fix is architectural — a CTC sequence
+model that skips explicit segmentation — not more epochs.
+
+### Why plate accuracy is so much lower than character accuracy
+
+Errors compound: plate accuracy ≈ character accuracy ^ 7.
+
+At our measured 0.901 character accuracy, the predicted plate ceiling is
+**0.483** — and to reach a 95% plate-level target you would need **0.993**
+per character. That is the arithmetic that makes plate reading hard, and it
+is why the trust threshold matters more than another point of accuracy.
 
 ---
 
-## Baseline comparison
+## 3. The spike — the domain gap
 
-| Model | Character acc. (tier B) | Parameters |
-|---|---|---|
-| MLP (control) | | |
-| CNN | | |
+| | Accuracy |
+|---|---:|
+| Handwritten (held-out EMNIST) | 0.816 |
+| Printed (17 rendered fonts, 612 glyphs) | 0.623 |
+| **Domain gap** | **+0.194** |
+
+EMNIST is handwritten; plates are printed. §3 permits not closing this gap in
+two weeks, provided it is measured and stated rather than assumed away. This
+is that measurement, and every plate-level number above inherits it.
 
 ---
 
-## Reproducibility
+## 4. Confusion analysis
 
-- Seed: 42 · config: `anpr_package/config/default.yaml`
-- Data provenance: `artifacts/provenance/provenance.json`
-- Split fingerprints: `artifacts/provenance/split_manifest.json`
-- Every number here regenerates with `python anpr_package/scripts/evaluate.py`
+Top error pairs on the held-out EMNIST test set:
+
+| True → Predicted | Error rate | n |
+|---|---:|---:|
+| O → 0 | 46.5% | 1,108 |
+| L → 1 | 42.4% | 732 |
+| I → 1 | 33.7% | 430 |
+| Q → 9 | 19.5% | 92 |
+| 0 → O | 18.8% | 560 |
+| L → I | 12.7% | 220 |
+| 1 → L | 10.2% | 332 |
+| 1 → I | 9.5% | 309 |
+
+**Weakest classes by recall:** L (0.433), O (0.511), I (0.574) — all members
+of the O/0/L/1/I cluster, which is a *shape* problem, not a training-data
+problem.
+
+### We pre-registered our predictions, then checked them
+
+`CONFUSABLE_PAIRS` was written down **before** training. Six of ten were
+confirmed at >1% error rate:
+
+| Predicted pair | Confirmed? |
+|---|---|
+| 0 ↔ O | ✅ |
+| 1 ↔ I | ✅ |
+| 5 ↔ S | ✅ |
+| 2 ↔ Z | ✅ |
+| 6 ↔ G | ✅ |
+| D ↔ O | ✅ |
+| U ↔ V | ✅ |
+| 8 ↔ B | ❌ not observed |
+| 7 ↔ T | ❌ not observed |
+| 4 ↔ A | ❌ not observed |
+
+The three misses are as informative as the hits: the vertical-stroke cluster
+(0/O/1/I/L) dominates, while the pairs we expected to confuse on *curvature*
+(8/B, 4/A) did not. **A practical consequence:** many jurisdictions already
+exclude I, O and Q from issued plates. If Meridian's do, masking those three
+outputs is free accuracy.
+
+---
+
+## 5. Named failure modes
+
+1. **Domain gap.** EMNIST is handwritten, plates are printed. Largest single
+   source of error, measured at +0.194.
+2. **Segmentation on touching or broken glyphs.** Connected components cannot
+   split merged characters — 351 of 378 hard-tier failures.
+3. **Compounding.** Plate accuracy is character accuracy to the 7th power.
+4. **Case-ambiguous glyphs.** m/M, o/O, u/U are inseparable at 28×28; merged
+   into 36 classes, which caps achievable accuracy on those characters.
+5. **Synthetic evaluation.** Real plates add mud, screws, frames, IR
+   illumination and motion blur at speed. Everything here is an upper bound.
+
+---
+
+## 6. Explicitly not attempted
+
+- Plate localisation within a road scene (we assume a cropped plate)
+- Multi-line and non-Latin plates
+- Real photographic validation
+- Closing the handwriting→printed domain gap
+
+---
+
+## 7. Reproducibility
+
+- Seed 42 throughout; splits verified disjoint by index **and** by image bytes
+- Data provenance, route, and content hashes: `artifacts/provenance/provenance.json`
+- Ground truth for the persisted test set: `data/generated/manifest.csv`
+- The notebook regenerates every figure and number in this document end to end
