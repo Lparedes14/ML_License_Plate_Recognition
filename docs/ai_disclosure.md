@@ -17,7 +17,7 @@ under-disclosing is an integrity problem.
 
 | Area | Tool | What it did | Reviewed & owned by |
 |---|---|---|---|
-| Repository structure, module scaffolding, docstrings | Claude | Proposed the `src/anpr/` layout; ported the Week-1 notebook data code into modules; wrote docstrings and the test suite for the contract, guards, labels, metrics and cost model | |
+| Repository structure, module scaffolding, docstrings | Claude | Proposed the `anpr_package/src/anpr/` layout; ported the Week-1 notebook data code into modules; wrote docstrings and the test suite for the contract, guards, labels, metrics and cost model | |
 | | | | |
 
 ---

@@ -23,7 +23,7 @@ amount of classifier accuracy saves the system — a 7-character plate read as
 
 ### What we did
 
-A throwaway script (`notebooks/spike_segmentation.py`, deliberately not
+A throwaway script (`anpr_package/notebooks/spike_segmentation.py`, deliberately not
 production code): render synthetic plates with a system font, threshold with
 Otsu, run `cv2.connectedComponentsWithStats`, filter blobs by size and
 aspect ratio, count what survives. 40 plates per condition, three baseline
@@ -59,7 +59,7 @@ are not a tuning detail; they are the segmenter.
 ### What changed in the plan
 
 1. **Kerning became a tracked variable.** It wasn't in the original tier
-   design (`config/default.yaml`'s tiers vary blur/noise/rotation/contrast —
+   design (`anpr_package/config/default.yaml`'s tiers vary blur/noise/rotation/contrast —
    none of which broke anything in this spike). It is the one parameter that
    *did* break segmentation, and it wasn't being measured at all.
 2. **The plate generator's font/spacing choices matter more than image
@@ -114,7 +114,7 @@ Worst printed characters: **M, Q, G at 0.000%**; 6 and K at 5.9%.
    in the results document has to carry this caveat.
 3. **It names a concrete Week 3+ direction without committing scope to it
    now:** a short fine-tune pass on rendered printed glyphs
-   (`config/default.yaml`'s `epochs_ft`, `lr_ft` — already provisioned for
+   (`anpr_package/config/default.yaml`'s `epochs_ft`, `lr_ft` — already provisioned for
    this, not yet run). Explicitly listed under "what four more weeks would
    buy," not under "what we will build this sprint."
 4. **A secondary, unplanned finding:** M and Q both failing completely
@@ -132,7 +132,7 @@ reported **129,461 training rows where ByClass has 697,932** — a silently
 truncated local file. The row-count check in `_load_kaggle_csv` caught it
 and the loader fell through to the next route rather than training on 18%
 of the data with no error. That check is now permanent
-(`tests/test_emnist.py`, 4 tests) and has already prevented the same class of
+(`anpr_package/tests/test_emnist.py`, 4 tests) and has already prevented the same class of
 failure from recurring on a teammate's machine with a different EMNIST
 download.
 

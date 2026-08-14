@@ -3,7 +3,7 @@
 **Ticket ML-53 · 1 page · For the COO**
 
 > **Template — not yet written.** Generate the numbers with
-> `python scripts/evaluate.py`, which writes
+> `python anpr_package/scripts/evaluate.py`, which writes
 > `artifacts/metrics/trust_policy.json`.
 >
 > §9: *"which reads you'd auto-accept vs. route to a human, and roughly what

@@ -18,14 +18,28 @@ making design decisions.
 
 ---
 
-## The one architectural rule
+## How this repository is organised
 
-**Logic lives in `src/anpr/`. Notebooks and scripts import it and call it.**
+**The notebook at the repo root is the source of truth.**
+`ML_FinalProject_Group_8.ipynb` is the graded deliverable and the thing that
+runs in the demo — self-contained, one click to open in Colab.
 
-A notebook cell should read `from anpr.models import build_cnn`, never
-contain 200 lines of model code. This is what lets three people work in
-parallel without merge conflicts, and what makes the repo runnable from a
-clean clone (§9 — failing that check is −8 points).
+`anpr_package/` holds the same pipeline factored into an installable Python
+package with 53 tests. It is **not** imported by the notebook; the two are
+parallel implementations that share `artifacts/` and `data/`.
+
+That is a deliberate trade, and worth understanding before changing either:
+
+- The notebook wins on *demonstrability* — everything runs in one place, in
+  Colab, with a GPU and a public Gradio link.
+- The package wins on *verifiability* — automated tests, runtime guards that
+  are proven to fire, structural blocks on double-normalisation and class-map
+  mismatches.
+
+**The cost of that trade is drift.** The two already differ (font choice,
+segmentation version — see `anpr_package/README.md`). When you change
+behaviour in one, decide explicitly whether the other should follow, rather
+than letting them diverge silently.
 
 ---
 
@@ -91,23 +105,23 @@ fixes it (§4). Never blend the two when reporting.
 
 ### Retraining
 
-Training happens **in Google Colab** (that's where the GPU is), not in this
-repo. The workflow:
+Training happens **in Google Colab** (that's where the GPU is). The workflow:
 
-1. Train in Colab (`ML_Draft1_Project.ipynb`)
-2. Download the artifacts zip
-3. Unzip **into** `artifacts/` — not the repo root:
-   `unzip anpr_artifacts.zip -d artifacts/`
+1. Open `ML_FinalProject_Group_8.ipynb` in Colab (badge in the root README)
+2. `Runtime → Run all`
+3. Download the artifacts it writes, and unzip **into** `artifacts/` — not
+   the repo root: `unzip anpr_artifacts.zip -d artifacts/`
 
-`src/anpr/models/` holds the architecture and training loop so the code is
-reviewable and testable, but the actual training runs happen in the notebook.
+`anpr_package/src/anpr/models/` holds an equivalent architecture and training
+loop so the code is reviewable and testable, but the model actually committed
+under `artifacts/models/` comes from the notebook run.
 
 ---
 
 ## Repository map
 
 ```
-src/anpr/
+anpr_package/src/anpr/
 ├── config.py          settings, seeds, the 36-class charset, paths
 ├── data/
 │   ├── contract.py    THE input contract - read this first
@@ -135,15 +149,26 @@ impossible rather than merely unlikely.
 
 ## Running things
 
+**The demo** — open the root notebook in Colab and run all. That is the
+graded path (§9's "one command").
+
+**The package** — everything below runs from inside `anpr_package/`, not the
+repo root, because that is where `pyproject.toml` and `config/` live:
+
 ```bash
+cd anpr_package
 pip install -e ".[download,demo,dev]"   # editable install; TensorFlow included
 
 pytest                                  # 53 tests, ~4s, no GPU needed
 python scripts/prepare_data.py          # load + verify EMNIST, split, sign off
 python scripts/make_test_plates.py      # 1,200 synthetic plates + manifest
 python scripts/evaluate.py              # measure at all 3 tiers
-python scripts/demo.py --image <path>   # the demo (§9's "one command")
+python scripts/demo.py --image <path>
 ```
+
+Paths still resolve to the shared `artifacts/` and `data/` at the **repo
+root** (`PROJECT_ROOT = parents[3]` in `config.py`), so the package and the
+notebook read the same model and the same test set.
 
 **Note:** the tests are written to run *without* TensorFlow installed — all
 TF imports are deferred inside functions. That's why `pytest` passes on a

@@ -85,7 +85,7 @@ Named without being asked (§10).
 
 ## Reproducibility
 
-- Seed: 42 · config: `config/default.yaml`
+- Seed: 42 · config: `anpr_package/config/default.yaml`
 - Data provenance: `artifacts/provenance/provenance.json`
 - Split fingerprints: `artifacts/provenance/split_manifest.json`
-- Every number here regenerates with `python scripts/evaluate.py`
+- Every number here regenerates with `python anpr_package/scripts/evaluate.py`

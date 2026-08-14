@@ -34,7 +34,7 @@ the date, and a date written from memory is not evidence.
 
 **One rule that matters:** evidence produced by the Week-1 Colab notebook does **not** count
 as PASS — the modules were refactored during the repo restructure (globals became
-parameters). `scripts/prepare_data.py` was executed for real on 13 Aug (Thenmani,
+parameters). `anpr_package/scripts/prepare_data.py` was executed for real on 13 Aug (Thenmani,
 commit `f1d8eaa`), and Block A below is updated against that run, not the Week-1 notebook.
 
 **A concrete example of why this rule exists:** the Week-1 run's class-imbalance numbers
@@ -86,11 +86,11 @@ tickets gate 27 of the 68 criteria between them.
 
 | CA | Gate | Status | Date | Evidence | Notes |
 |---|---|---|---|---|---|
-| CA-A1 | HARD | **PASS** | 12 Aug | `tests/test_orientation.py::test_rejects_transposed_glyphs` | Synthetic glyphs; guard raises as specified |
-| CA-A2 | HARD | **PASS** | 12 Aug | `tests/test_orientation.py::test_prove_guard_fires_passes_on_good_data` | The guard is proven to fire |
-| CA-A3 | HARD | **PASS** | 13 Aug | `tests/test_emnist.py::test_truncated_file_is_rejected`, `test_error_names_actual_and_expected_row_counts`, `test_sufficient_rows_pass_the_gate`, `test_exactly_at_threshold_is_accepted` | 4 tests: below/at/above the 95% threshold, plus the error message is actionable |
-| CA-A4 | HARD | **PASS** | 12 Aug | `tests/test_contract.py::test_normalize_refuses_float_input` | Double-normalisation blocked |
-| CA-A5 | HARD | **PASS** | 12 Aug | `tests/test_contract.py::test_canonicalises_any_input_shape` | 5 input shapes covered |
+| CA-A1 | HARD | **PASS** | 12 Aug | `anpr_package/tests/test_orientation.py::test_rejects_transposed_glyphs` | Synthetic glyphs; guard raises as specified |
+| CA-A2 | HARD | **PASS** | 12 Aug | `anpr_package/tests/test_orientation.py::test_prove_guard_fires_passes_on_good_data` | The guard is proven to fire |
+| CA-A3 | HARD | **PASS** | 13 Aug | `anpr_package/tests/test_emnist.py::test_truncated_file_is_rejected`, `test_error_names_actual_and_expected_row_counts`, `test_sufficient_rows_pass_the_gate`, `test_exactly_at_threshold_is_accepted` | 4 tests: below/at/above the 95% threshold, plus the error message is actionable |
+| CA-A4 | HARD | **PASS** | 12 Aug | `anpr_package/tests/test_contract.py::test_normalize_refuses_float_input` | Double-normalisation blocked |
+| CA-A5 | HARD | **PASS** | 12 Aug | `anpr_package/tests/test_contract.py::test_canonicalises_any_input_shape` | 5 input shapes covered |
 | CA-A6 | HARD | **PASS** | 13 Aug | `artifacts/provenance/split_manifest.json` (Thenmani, `f1d8eaa`) | train/val index overlap = 0 |
 | CA-A7 | HARD | **PASS** | 13 Aug | same file | max drift: val 0.0025 pp, test 0.2005 pp — well under the 0.5 pp gate |
 | CA-A8 | REPORT | **PASS** | 13 Aug | same file | dup_train_test=2, dup_val_test=0, dup_train_val=0. The 2 train↔test duplicates are inherited from the EMNIST source files, not our split logic — see RN in the split report |
@@ -113,7 +113,7 @@ EMNIST-scale — fast, and it exercises the exact guard that caught the real Wee
 | CA-B4 | REPORT | PENDING | | | Needs both CNN and MLP trained |
 | CA-B5 | REPORT | PENDING | | | Needs `--no-augment` comparison run |
 | CA-B6 | REPORT | PENDING | | | Needs both imbalance arms |
-| CA-B7 | HARD | **PASS** | 12 Aug | Code inspection — `scripts/train.py` | Only train and validation passed to `fit()`; test split never loaded |
+| CA-B7 | HARD | **PASS** | 12 Aug | Code inspection — `anpr_package/scripts/train.py` | Only train and validation passed to `fit()`; test split never loaded |
 
 ---
 
@@ -142,10 +142,10 @@ the one criterion in this block that a working pipeline does not prove by itself
 | CA | Gate | Status | Date | Evidence | Notes |
 |---|---|---|---|---|---|
 | CA-D1 | HARD | **PASS** | 12 Aug | RN-01 in the criteria document; ML-38 closed | Definition agreed before any evaluation ran |
-| CA-D2 | REPORT | **PASS** | 12 Aug | `tests/test_metrics_and_business.py::test_segmentation_failure_excluded_from_character_accuracy` | Counting rule verified |
-| CA-D3 | REPORT | **PASS** | 12 Aug | `tests/test_metrics_and_business.py::test_plate_accuracy_is_all_or_nothing` | Counting rule verified |
+| CA-D2 | REPORT | **PASS** | 12 Aug | `anpr_package/tests/test_metrics_and_business.py::test_segmentation_failure_excluded_from_character_accuracy` | Counting rule verified |
+| CA-D3 | REPORT | **PASS** | 12 Aug | `anpr_package/tests/test_metrics_and_business.py::test_plate_accuracy_is_all_or_nothing` | Counting rule verified |
 | CA-D4 | HARD | **PASS** | 14 Aug | `artifacts/metrics/tier_results.json` — 400 confidences per tier, 1,200 total | Every read in the batch carried a confidence; none empty-defaulted unexpectedly |
-| CA-D5 | REPORT | **PASS** | 14 Aug | `artifacts/metrics/tier_results.json`, `scripts/evaluate.py` | Measured at all 3 tiers, 400 plates each, on the actual committed pipeline code |
+| CA-D5 | REPORT | **PASS** | 14 Aug | `artifacts/metrics/tier_results.json`, `anpr_package/scripts/evaluate.py` | Measured at all 3 tiers, 400 plates each, on the actual committed pipeline code |
 | CA-D6 | HARD | **FAIL** | 14 Aug | `data/generated/manifest.csv` | The three tiers draw independently random plate text, not the same 400 strings at three quality levels — confirmed by inspection (`TH48JWE` appears only in the hard-tier manifest rows). Noted as a methodology limitation in `docs/approach.md` §5 and `README.md` rather than silently left. Fix: reseed per tier in `build_persisted_test_set()` before the next regeneration |
 | CA-D7 | HARD | PENDING | | | `demo.py` prints the segmentation-failure label; not yet run against one of the real failure cases surfaced by `evaluate.py` (e.g. `data/generated/hard/` plates that returned 0 boxes) |
 
@@ -165,10 +165,10 @@ the one criterion in this block that a working pipeline does not prove by itself
 
 | CA | Gate | Status | Date | Evidence | Notes |
 |---|---|---|---|---|---|
-| CA-E1 | HARD | **PASS** | 13 Aug | `tests/test_inference.py::test_aggregate_confidence_is_the_minimum` (+2 more) | Confirms the minimum, not the mean, and that an empty read reports 0.0 |
-| CA-E2 | HARD | **PASS** | 12 Aug | `tests/test_metrics_and_business.py::test_threshold_sweep_finds_a_cheaper_policy...` | Full 0.00–1.00 sweep, 101 points |
+| CA-E1 | HARD | **PASS** | 13 Aug | `anpr_package/tests/test_inference.py::test_aggregate_confidence_is_the_minimum` (+2 more) | Confirms the minimum, not the mean, and that an empty read reports 0.0 |
+| CA-E2 | HARD | **PASS** | 12 Aug | `anpr_package/tests/test_metrics_and_business.py::test_threshold_sweep_finds_a_cheaper_policy...` | Full 0.00–1.00 sweep, 101 points |
 | CA-E3 | HARD | BLOCKED | | | ML-37 — needs the 400/400 calibration/reporting split |
-| CA-E4 | HARD | **PASS** | 12 Aug | `tests/test_metrics_and_business.py::test_matches_the_brief_30000_wrong_bills` | 30,660 vs the brief's "roughly 30,000" |
+| CA-E4 | HARD | **PASS** | 12 Aug | `anpr_package/tests/test_metrics_and_business.py::test_matches_the_brief_30000_wrong_bills` | 30,660 vs the brief's "roughly 30,000" |
 | CA-E5 | REPORT | **PASS** | 12 Aug | Same test file — mechanism verified on synthetic confidences | Real data still required |
 | CA-E6 | HARD | PENDING | | | Assumption labels present in code; needs the written business note |
 | CA-E7 | HARD | PENDING | | | `policy_sentence()` implemented; needs real numbers |
@@ -186,14 +186,14 @@ the one criterion in this block that a working pipeline does not prove by itself
 | CA-F5 | HARD | BLOCKED | | | ML-45 |
 | CA-F6 | HARD | BLOCKED | | | ML-48 — choose the failure case Friday, not Saturday |
 | CA-F7 | HARD | BLOCKED | | | ML-42 must produce a model first |
-| CA-F8 | HARD | **PASS** | 12 Aug | `grep -rn "google.colab\|/content\|MyDrive\|drive.mount" src/ scripts/ tests/ config/` | Two hits, both accepted — **see the finding below** |
+| CA-F8 | HARD | **PASS** | 12 Aug | `grep -rn "google.colab\|/content\|MyDrive\|drive.mount" src/ anpr_package/scripts/ tests/ config/` | Two hits, both accepted — **see the finding below** |
 | CA-F9 | HARD | BLOCKED | | | ML-55 — recording made Friday |
 
 ### Finding QA-01 — `/content` appears in the shipped source (CA-F8, accepted)
 
 Recorded here so that nobody is surprised by it, including an instructor who greps for it.
 
-The check found two hits, both in `src/anpr/data/emnist.py`:
+The check found two hits, both in `anpr_package/src/anpr/data/emnist.py`:
 
 - line 82 — a docstring mentioning Colab's `/content`
 - line 96 — `roots = search_dirs or [RAW_DATA_DIR, Path("/content"), Path(".")]`
@@ -222,10 +222,10 @@ is a judgement call, recorded here rather than left implicit.
 | CA-G2 | REPORT | BLOCKED | | | ML-43 |
 | CA-G3 | REPORT | BLOCKED | | | ML-43 |
 | CA-G4 | HARD | BLOCKED | | | Needs a non-plate test image — prepare one Friday |
-| CA-G5 | HARD | **PASS** | 13 Aug | `tests/test_inference.py::test_read_plate_rejects_nonexistent_path`, `test_read_plate_rejects_corrupt_image_file` | Was marked BLOCKED — turned out not to be: the path check in `read_plate()` runs before segmentation is ever invoked, so ML-43 was never actually a dependency here |
+| CA-G5 | HARD | **PASS** | 13 Aug | `anpr_package/tests/test_inference.py::test_read_plate_rejects_nonexistent_path`, `test_read_plate_rejects_corrupt_image_file` | Was marked BLOCKED — turned out not to be: the path check in `read_plate()` runs before segmentation is ever invoked, so ML-43 was never actually a dependency here |
 | CA-G6 | HARD | BLOCKED | | | Still genuinely blocked — needs `segment_characters()` (ML-43) to exist; an all-black/white image can't be tested until segmentation does something with it |
-| CA-G7 | HARD | **PASS** | 13 Aug | `tests/test_inference.py::test_load_reader_refuses_missing_classmap` (+1 more) | Found and fixed a real bug while writing this: `load_reader()` imported TensorFlow *before* the classmap-existence check, so this criterion was untestable (and the check itself unreachable) on any machine without TF installed. Reordered — the cheap path check now runs first |
-| CA-G8 | HARD | **PASS** | 12 Aug | `tests/test_labels.py::test_class_map_detects_a_reordered_charset` | Reordered charset refused |
+| CA-G7 | HARD | **PASS** | 13 Aug | `anpr_package/tests/test_inference.py::test_load_reader_refuses_missing_classmap` (+1 more) | Found and fixed a real bug while writing this: `load_reader()` imported TensorFlow *before* the classmap-existence check, so this criterion was untestable (and the check itself unreachable) on any machine without TF installed. Reordered — the cheap path check now runs first |
+| CA-G8 | HARD | **PASS** | 12 Aug | `anpr_package/tests/test_labels.py::test_class_map_detects_a_reordered_charset` | Reordered charset refused |
 | CA-G9 | REPORT | BLOCKED | | | ML-50 |
 | CA-G10 | REPORT | BLOCKED | | | ML-42 |
 | CA-G11 | REPORT | BLOCKED | | | ML-52 with real data |
@@ -263,8 +263,8 @@ Ranked. Items 1–4 need no production code and can be done today.
 | ~~1~~ | ~~Grep for hardcoded Colab/Drive paths~~ | CA-F8 | done | Luis — see Finding QA-01 |
 | ~~2~~ | ~~Add a test for a missing class map~~ | CA-G7 | done | Luis — also fixed a real bug: `load_reader()` imported TF before this check |
 | ~~3~~ | ~~Add a test for an unreadable file~~ | CA-G5 | done | Luis — turned out independent of ML-43, see CA-G5 row |
-| ~~4~~ | ~~Add a test for the truncated-file guard~~ | CA-A3 | done | Luis — 4 tests, `tests/test_emnist.py` |
-| ~~5~~ | ~~Add a direct test for `aggregate_confidence()`~~ | CA-E1 | done | Luis — `tests/test_inference.py` |
+| ~~4~~ | ~~Add a test for the truncated-file guard~~ | CA-A3 | done | Luis — 4 tests, `anpr_package/tests/test_emnist.py` |
+| ~~5~~ | ~~Add a direct test for `aggregate_confidence()`~~ | CA-E1 | done | Luis — `anpr_package/tests/test_inference.py` |
 | ~~6~~ | ~~Run `prepare_data.py` and clear the Block A rows~~ | CA-A6 – CA-A9 | done | Thenmani, commit `f1d8eaa` |
 | 7 | Confirm clean clone on the other two machines | CA-H2 | 15 min | All three |
 | 8 | Write the CA-C4 centre-of-mass test **alongside** the code | CA-C4 | — | Luis |

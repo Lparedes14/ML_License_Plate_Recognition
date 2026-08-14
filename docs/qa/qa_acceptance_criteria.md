@@ -51,7 +51,7 @@ a 2% plate-level error rate is roughly 30,000 wrong bills a year. The real desig
 
 | # | Stage | Module |
 |---|---|---|
-| 1 | A plate image is supplied (file path or array) | `scripts/demo.py` |
+| 1 | A plate image is supplied (file path or array) | `anpr_package/scripts/demo.py` |
 | 2 | Converted to grayscale, thresholded to black/white | `segment/binarize.py` |
 | 3 | Connected components → N character bounding boxes | `segment/components.py` |
 | 4 | Boxes sorted into reading order (left to right) | `segment/components.py` |
@@ -490,7 +490,7 @@ When annual wrong bills are computed at a 2% plate error rate
 Then the result falls between 29,000 and 32,000
 ```
 *§2 states "roughly 30,000". If our model disagrees, our model is wrong. Automated in
-`tests/test_metrics_and_business.py`.*
+`anpr_package/tests/test_metrics_and_business.py`.*
 
 **CA-E5 · REPORT** — The recommended policy beats blanket acceptance
 ```gherkin
@@ -544,7 +544,7 @@ Then all tests pass
 **CA-F3 · HARD** — The demo accepts an arbitrary file path
 ```gherkin
 Given any readable image file anywhere on disk
-When scripts/demo.py is invoked with --image pointing at it
+When anpr_package/scripts/demo.py is invoked with --image pointing at it
 Then the pipeline runs without code changes or file relocation
 ```
 *A demo that only works on pre-selected images is a **−5 deduction** (§10).*

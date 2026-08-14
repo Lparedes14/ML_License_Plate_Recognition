@@ -29,10 +29,20 @@ import yaml
 # scripts/, and pytest in tests/ all find config/ and artifacts/ without
 # any of them caring where they were launched from.
 #
-#   config.py -> anpr/ -> src/ -> <repo root>
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# The package lives in anpr_package/, but data/ and artifacts/ live at the
+# REPO root, shared with the Colab notebook - so both the notebook and this
+# package read and write the same model, metrics and provenance files rather
+# than each keeping a private copy that silently drifts.
+#
+#   config.py -> anpr/ -> src/ -> anpr_package/ -> <repo root>
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-CONFIG_DIR = PROJECT_ROOT / "config"
+# Where the package's own files live (config/default.yaml, scripts/, tests/).
+PACKAGE_ROOT = Path(__file__).resolve().parents[2]
+
+# config/ ships WITH the package (it describes how this code runs), while
+# data/ and artifacts/ sit at the repo root (shared with the notebook).
+CONFIG_DIR = PACKAGE_ROOT / "config"
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"              # EMNIST CSVs live here (gitignored)
 GENERATED_DATA_DIR = DATA_DIR / "generated"  # synthetic plates (gitignored)
