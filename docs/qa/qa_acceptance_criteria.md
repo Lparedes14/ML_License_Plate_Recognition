@@ -12,6 +12,11 @@
 | **Epics covered** | ML-19 Approach · ML-20 Spike · ML-21 Data and Test Set · ML-22 Model and Pipeline · ML-23 Measurement · ML-24 Business and Communication |
 | **Open bugs** | None on the board at time of writing |
 
+> **On `anpr_package/` references below.** The team consolidated on the
+> notebook as the single graded deliverable; the parallel `anpr_package/`
+> implementation referenced in a few criteria below has since been removed.
+> This document is supporting material, not a graded deliverable.
+
 **What this document is.** It defines what "successful" means *before* anything is
 measured. It is not the results summary — `docs/results.md` records what we actually got.
 This one records what we agreed to check.

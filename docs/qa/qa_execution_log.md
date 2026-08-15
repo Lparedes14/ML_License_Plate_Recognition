@@ -13,6 +13,14 @@ artifacts in `artifacts/` hold what we measured. This log is the link between th
 records *when* each criterion was actually run, *what happened*, and *where the evidence
 lives*.
 
+> **On `anpr_package/` references below.** The team consolidated on the
+> notebook as the single graded deliverable, and the parallel `anpr_package/`
+> implementation — including its 53 tests — has since been removed from the
+> repository. Rows below that cite `anpr_package/tests/...` as evidence
+> record tests that passed during development; they are not reproducible in
+> the current repo state. This log is supporting material, not a graded
+> deliverable (see the root README).
+
 Without it the criteria document reads as aspirational. At the demo the chain has to hold:
 criteria agreed in advance → log showing they were run → raw numbers → the narrative in
 `docs/results.md`.

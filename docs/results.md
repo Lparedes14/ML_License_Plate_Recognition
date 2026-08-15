@@ -2,15 +2,15 @@
 
 **Ticket ML-51 · Group 8 · ANPR prototype**
 
-*Every number here comes from `ML_FinalProject_Group_8.ipynb` and is mirrored
-in `artifacts/provenance/provenance.json`. Nothing is retyped from memory.*
+*Every number here comes from the executed outputs of
+`ML_FinalProject_Group_8.ipynb`, which regenerates all of them end to end.*
 
 ---
 
 ## Conditions — read these before any number below
 
 All plate-level figures are measured on **synthetically rendered plates**,
-never photographs. No licensed plate corpus was used (§11: plate numbers are
+never photographs. No licensed plate corpus was used (Section 11: plate numbers are
 personal data). Three degradation levels, reported separately:
 
 | Tier | Skew | Blur | Lighting | Noise |
@@ -80,7 +80,7 @@ is why the trust threshold matters more than another point of accuracy.
 | Printed (17 rendered fonts, 612 glyphs) | 0.623 |
 | **Domain gap** | **+0.194** |
 
-EMNIST is handwritten; plates are printed. §3 permits not closing this gap in
+EMNIST is handwritten; plates are printed. Section 3 permits not closing this gap in
 two weeks, provided it is measured and stated rather than assumed away. This
 is that measurement, and every plate-level number above inherits it.
 
@@ -151,12 +151,3 @@ outputs is free accuracy.
 - Multi-line and non-Latin plates
 - Real photographic validation
 - Closing the handwriting→printed domain gap
-
----
-
-## 7. Reproducibility
-
-- Seed 42 throughout; splits verified disjoint by index **and** by image bytes
-- Data provenance, route, and content hashes: `artifacts/provenance/provenance.json`
-- Ground truth for the persisted test set: `data/generated/manifest.csv`
-- The notebook regenerates every figure and number in this document end to end

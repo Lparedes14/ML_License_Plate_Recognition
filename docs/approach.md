@@ -3,16 +3,8 @@
 **Group 8 · ISM 6642 · Meridian Access Systems ANPR Prototype**
 
 *Every figure in this document comes from the executed outputs of
-`ML_FinalProject_Group_8.ipynb`. Section references (§2, §4, §11…) point to
+`ML_FinalProject_Group_8.ipynb`. Section references (Section 2, Section 4, Section 11…) point to
 the project brief.*
-
-> **Before submission:** download the notebook's `provenance.json`,
-> `results_summary.md` and `plate_char_model.keras` and commit them, so every
-> number here is backed by a file in `artifacts/`. The artifacts currently
-> committed are from the parallel `anpr_package/` run and carry **different**
-> tier numbers (that implementation uses a single monospace font and the
-> pre-split segmenter). Both runs are real; only one should be cited, and
-> this document cites the notebook.
 
 ---
 
@@ -31,19 +23,17 @@ precision** and, at an assumed $14 cost per misread, would **increase**
 operating cost by **$20,399 a year** — a 3-year NPV of **−$230,729**. We
 recommend a paid pilot at 2–3 sites, not an estate-wide rollout.
 
-That is a more useful result than a flattering one, because the reason is
-specific and fixable. Automating 10% of plates avoids **$25,601** of manual
-handling and human error, while the platform costs **$46,000** a year to run.
-**Break-even is 18% automation.** The constraint is *coverage* — how many
-plates the system dares to accept — not accuracy on the plates it already
-accepts. Those are different engineering problems, and §5 shows which one to
-attack.
+That is more useful than a flattering result, because the reason is specific
+and fixable: **break-even is 18% automation**, and the constraint is
+*coverage* — how many plates the system dares to accept — not accuracy on the
+ones it already accepts. Those are different engineering problems, and Section 5
+shows which to attack.
 
-The framing that matters for the COO is therefore not *"how accurate is it"*
-but *"which reads do we trust automatically, and which do we send to a
-human"* — and at 4,200 vehicles/day, a 2% plate-level error rate would mean
-roughly 30,000 wrong bills a year, each one a refund, a support call, and an
-annoyed regular.
+So the question that matters for the COO is not *"how accurate is it"* but
+*"which reads do we trust automatically, and which go to a human"* — because
+at 4,200 vehicles/day a 2% plate-level error rate is roughly 30,000 wrong
+bills a year, each a refund, a support call and an annoyed regular. Full
+costing in [`business_note.md`](business_note.md).
 
 ---
 
@@ -55,8 +45,8 @@ plate image → binarise → segment → normalise crop → CNN → assemble →
 
 | Stage | What it does | Where it fails |
 |---|---|---|
-| **Binarise** | Otsu threshold, inverted (plates are dark-on-light, EMNIST is light-on-dark) | Uneven lighting merges or erases strokes |
-| **Segment** | Contours → filter by glyph geometry → **split merged glyphs** → order left-to-right | Touching or broken characters. **The dominant failure — see §5** |
+| **Binarise** | Automatic threshold selection, inverted (plates are dark-on-light, EMNIST is light-on-dark) | Uneven lighting merges or erases strokes |
+| **Segment** | Contours → filter by glyph geometry → **split merged glyphs** → order left-to-right | Touching or broken characters. **The dominant failure — see Section 5** |
 | **Normalise** | 20px longest side, centred by *centre of mass*, into 28×28 | Silent killer if it drifts from the training recipe |
 | **Classify** | Each crop → character + softmax confidence | Confusable glyph shapes (O/0, L/1, I/1) |
 | **Assemble** | Join characters; plate confidence = **minimum** across them | — |
@@ -65,7 +55,7 @@ plate image → binarise → segment → normalise crop → CNN → assemble →
 Two design decisions we would defend:
 
 **One preprocessing function, used by both paths.** `to_mnist_format()` runs
-at training time *and* at inference time. §4 of the brief names mismatched
+at training time *and* at inference time. Section 4 of the brief names mismatched
 preprocessing as the single most common cause of "high validation accuracy,
 unusable on real images"; sharing one function makes that drift structurally
 impossible rather than merely unlikely.
@@ -105,7 +95,7 @@ uses every sample instead of discarding the majority classes.
 
 **Test set.** Plates are rendered programmatically at three degradation
 tiers, so the ground-truth string is known by construction — labelling costs
-nothing, and §11's consent constraint is satisfied by never touching a
+nothing, and Section 11\'s consent constraint is satisfied by never touching a
 photograph.
 
 ---
@@ -127,17 +117,17 @@ only job is to make the CNN's number mean something:
 Six points of accuracy for 9% more parameters is the value of spatial
 structure, not of scale.
 
-**Sample sizes** (§8 promises these will be asked live): train **198,000**,
+**Sample sizes** (Section 8 promises these will be asked live): train **198,000**,
 validation **22,000**, test **60,000** — the test split from a physically
 separate EMNIST file, opened once.
 
 **Fallback, had the CNN underperformed:** drop the confusable I/O/Q from the
 plate alphabet entirely; increase augmentation rather than model capacity
-(the domain gap in §6 is a data problem, not a capacity problem); or accept
+(the domain gap in Section 6 is a data problem, not a capacity problem); or accept
 lower accuracy and lean harder on the trust threshold.
 
 **A constraint we worked under:** Tesseract, EasyOCR, PaddleOCR and cloud OCR
-APIs are not permitted as the system's classifier (§6 — using one costs 20
+APIs are not permitted as the system's classifier (Section 6 — using one costs 20
 points). Every character prediction here comes from the CNN above, which we
 trained. Running an off-the-shelf engine *alongside* ours as a published
 comparison would have earned credit; we did not have the time budget and are
@@ -196,17 +186,72 @@ estimate of classifier performance under those conditions.
 
 ## 6. Spike
 
-Two risky assumptions tested cheaply; both changed the plan. Detail in
-[`spike.md`](spike.md).
+Two risky assumptions from Section 3\'s list, both cheap enough to test in the time
+available. We ran both rather than choosing one, and **both changed the plan.**
 
-**Will a handwriting-trained model read printed plates?** Measured on a
-2-epoch throwaway CNN: **0.816 handwritten vs 0.623 printed — a +0.194
-domain gap.** §3 permits not closing this in two weeks, provided it is
-measured rather than assumed away. Every plate-level number above inherits it.
+### Spike 1 — can connected components segment reliably?
 
-**Can connected components segment reliably?** Viable, but fragile to
-character spacing in a way the original tier design never tracked. That
-finding is what led directly to the v2 splitting fix in §5.
+*Why this one:* everything downstream assumes segmentation works. A
+7-character plate read as 6 is wrong before the classifier is consulted.
+
+A throwaway script rendered plates, applied automatic thresholding, ran
+`connectedComponentsWithStats` and filtered blobs by size and aspect ratio,
+40 plates per condition. All three baseline quality levels scored **100%
+exact** — itself the finding: the baseline was too easy. Two stress tests
+found the real breaking points:
+
+| Character spacing | Exact match | | Blob-sized speckle | Exact match |
+|---:|---:|---|---:|---:|
+| 1.00 | 100% | | 0 | 100% |
+| 0.85 | 90% | | 20 | 70% |
+| 0.75 | 70% | | 60 | **2%** |
+| 0.55 | **0%** | | | |
+
+A second result mattered as much: at the degraded level the blob **filters**
+were doing 100% of the work — the same run with filtering disabled scored
+**0%**, at 1,442 stray blobs per plate. The filters are not a tuning detail;
+they *are* the segmenter.
+
+**What changed.** Kerning became a tracked variable — absent from the original
+tier design, which varied blur, noise, rotation and contrast, none of which
+broke anything. The degraded tier was rebuilt around *larger* artifacts
+(touching glyphs, blob-sized debris) rather than pixel noise the area filter
+removes trivially. And it predicted the v2 splitting fix in Section 5 before that
+code existed.
+
+### Spike 2 — will a handwriting-trained model read printed plates?
+
+*Why this one:* unlike segmentation it cannot be fixed by better engineering
+— only measured and accounted for.
+
+A 2-epoch throwaway CNN trained on EMNIST, evaluated on the held-out
+handwritten split and on 612 characters rendered from 17 system fonts through
+the same preprocessing:
+
+| | Accuracy |
+|---|---:|
+| Handwritten (held-out EMNIST) | 0.816 |
+| Printed (rendered fonts) | **0.623** |
+| **Domain gap** | **+0.194** |
+
+Worst printed characters: **M, Q and G at 0.000**.
+
+**What changed.** Section 3 permits not closing this gap in two weeks *provided it is
+measured rather than assumed away* — this is that measurement. It reframes
+what accuracy means: 90% on EMNIST is not 90% on plates, and every number in
+Section 5 inherits the caveat. Fine-tuning on rendered glyphs went into "what four
+more weeks would buy," not into scope. One unplanned finding: M and Q failing
+completely suggests 17 general-purpose fonts (several italic) may be *harder*
+than a real plate typeface — so treat 0.194 as an upper bound on the gap.
+
+### Bonus — the truncated data file
+
+Not a formal spike, same shape of result. Our first EMNIST load reported
+**129,461 training rows where ByClass has 697,932** — a silently truncated
+file. A row-count check caught it and fell through to the next loader route
+rather than training on 18% of the data with no error raised. That check is
+now permanent (4 tests) and has since caught the same failure on a teammate's
+machine.
 
 ---
 
@@ -222,9 +267,9 @@ threshold; and a live demo accepting any uploaded image.
 **Explicitly not attempted:**
 
 - **Plate localisation** within a road scene — we assume a cropped plate
-- **Closing the handwriting→printed domain gap** — measured (§6), not fixed
+- **Closing the handwriting→printed domain gap** — measured (Section 6), not fixed
 - **Multi-line or non-Latin plates**
-- **Real photographic validation** — §11 makes non-consensual plate imagery
+- **Real photographic validation** — Section 11 makes non-consensual plate imagery
   an automatic zero, so every number here is synthetic and should be read as
   an upper bound
 - **Hyperparameter search** — one architecture, justified by reasoning rather
@@ -238,11 +283,28 @@ threshold; and a live demo accepting any uploaded image.
 |---|---|---|
 | **Segmentation collapses under degradation** — measured 95.5% → 12.2% clean to hard, and it caps automation at 10% | The business case stays negative; a rollout cannot be justified | Report segmentation and recognition separately so the limitation is precise; pilot at sites resembling clean/normal first; a CTC sequence model is the named fix |
 | **Handwriting-trained classifier on printed plates** — +0.194 measured gap | Every accuracy figure is an upper bound on real-plate performance | Stated wherever accuracy is quoted; fine-tuning on rendered glyphs is the first "four more weeks" item |
-| **Live demo fails on an unseen image** — our own clean-tier segmentation is 95.5%, not 100% | Reads as an unrehearsed failure rather than a known limitation | Show a chosen failure ourselves before being asked, name which failure mode it is, and keep a backup recording (§8) |
+| **Live demo fails on an unseen image** — our own clean-tier segmentation is 95.5%, not 100% | Reads as an unrehearsed failure rather than a known limitation | Show a chosen failure ourselves before being asked, name which failure mode it is, and keep a backup recording (Section 8) |
 
 ---
 
 ## Appendix: AI assistance
 
-See [`ai_disclosure.md`](ai_disclosure.md). Required by §6 — we own every line
-submitted and expect to explain any part of it from memory.
+*Required by Section 6.*
+
+**AI assistance (Claude) was used extensively**, across code, documentation
+and project administration: scaffolding and debugging the notebook; drafting
+this document, the results summary and the business note from measured
+outputs; and the Jira evidence comments. Four bugs were found by AI review
+rather than by us —
+TensorFlow import ordering in `load_reader()`, the EMNIST route order,
+`PROJECT_ROOT` depth after the restructure, and the business note
+contradicting its own sensitivity table.
+
+**Not AI-generated:** every measured number here. All accuracy figures, the
+confusion analysis, the tier results and the business case come from executing
+code on real data. Nor were the trained models, the experimental decisions
+(which spikes to run, ByClass over Balanced, the case-merge and class-weighting
+choices), or the data itself.
+
+Per-item attribution is in [`ai_disclosure.md`](ai_disclosure.md). We own every
+line submitted and expect to explain any part of it from memory.

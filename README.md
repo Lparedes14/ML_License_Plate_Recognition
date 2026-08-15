@@ -21,6 +21,11 @@ all`, then use the public Gradio link it prints at the end.
 
 The demo accepts an image supplied **at demo time** — not only prepared ones.
 
+**[▶ Try the live demo](https://bd9be50f40d7c88f77.gradio.live/)** — the
+Gradio link from the most recent run. Gradio share links expire after the
+Colab session ends (usually within a few hours), so if it's down, re-run the
+notebook and swap in the fresh link it prints.
+
 ---
 
 ## Results
@@ -59,18 +64,12 @@ estate-wide rollout. See [`docs/business_note.md`](docs/business_note.md).
 ├── ML_FinalProject_Group_8.ipynb   ← THE deliverable. Everything runs here.
 ├── docs/                            ← the written deliverables
 ├── artifacts/                       ← trained model, metrics, provenance, figures
-├── data/                            ← EMNIST (gitignored) + generated plates
-└── anpr_package/                    ← the same pipeline as an installable
-                                        package, with 53 tests
+└── data/                            ← EMNIST (gitignored) + generated plates
 ```
 
-**The notebook is the source of truth.** `anpr_package/` is the Sprint-1
-modular implementation, kept because it carries the automated test suite and
-the runtime guards — evidence the notebook cannot show on its own. Both read
-and write the *same* `artifacts/` and `data/`, so they never drift on the
-model or the test set. See
-[`anpr_package/README.md`](anpr_package/README.md), which also documents
-where the two implementations currently differ.
+**The notebook is the whole project.** There is no separate package —
+data loading, training, segmentation, evaluation and the demo all run in one
+place, top to bottom, in Colab.
 
 ---
 
@@ -78,7 +77,7 @@ where the two implementations currently differ.
 
 ```
 plate image
-  → binarise            Otsu threshold, inverted (plates are dark-on-light)
+  → binarise            auto-thresholded, inverted (plates are dark-on-light)
   → segment             contours → filter → SPLIT merged glyphs → order L-to-R
   → normalise crop      20px longest side, centred by centre of mass, 28×28
   → CNN                 each crop → character + confidence
@@ -89,7 +88,7 @@ plate image
 Two design decisions worth defending:
 
 **The same `to_mnist_format()` runs at training time and inference time.**
-§4 names mismatched preprocessing as the most common cause of "high
+Section 4 names mismatched preprocessing as the most common cause of "high
 validation accuracy, useless on real images"; one shared function makes that
 drift structurally impossible.
 
@@ -99,47 +98,40 @@ bill the wrong customer on the one character that was actually wrong.
 
 ---
 
-## Documents — what's in each
+## Deliverables (Section 9 of the brief)
 
-| File | What you'll find in it |
+| # | File | What's in it |
+|---|---|---|
+| 1 | [`docs/approach.md`](docs/approach.md) | **Main deliverable (30 pts), 3–4 pp.** Problem framing, pipeline decomposition, data decisions (EMNIST ByClass, case merge, 7.61× imbalance), modeling and fallbacks, evaluation, **the spike (Section 6, 10 pts)**, explicit scope, risks, and the Section 6 AI-assistance appendix |
+| 2 | This repo + the Colab badge above | Runs from a clean clone; one command is "open the notebook, Run all" |
+| 3 | [`docs/results.md`](docs/results.md) | **2 pp.** Measured numbers with their conditions, confusion analysis, five named failure modes, explicit out-of-scope list |
+| 4 | [`docs/business_note.md`](docs/business_note.md) | **1 p for the COO.** The auto-accept policy, what it costs at 4,200 vehicles/day, the assumption that moves the answer most, what four more weeks would buy |
+| 5 | `ML_FinalProject_Group_8.ipynb` + backup recording | Live demo, 10 min. Failure cases in [`demo_images/`](demo_images/) |
+| 6 | `docs/contributions/` | Individual statements, ½ page each, **submitted privately** |
+
+The spike is **Section 6 of the approach document**, not a separate file — Section 3 of the
+brief lists it as a row of that document.
+
+### Supporting material — not graded deliverables
+
+Kept because it is evidence of how the work was done, not because Section 9 asks for it.
+
+| File | What's in it |
 |---|---|
-| [`docs/approach.md`](docs/approach.md) | **Main deliverable (30 pts).** Problem framing, pipeline decomposition, data decisions (EMNIST ByClass, case merge, 7.61× class imbalance), modeling choices and fallbacks, evaluation with measured numbers, spike summary, explicit scope, top-three risks |
-| [`docs/spike.md`](docs/spike.md) | **Spike (10 pts).** Two experiments in "assumed X, tested it, found Y, changed Z" form — segmentation viability under tight kerning, and the handwriting→printed domain gap (+0.19) |
-| [`docs/results.md`](docs/results.md) | Measured numbers with their conditions, confusion analysis, five named failure modes, explicit out-of-scope list. **The notebook generates a `results_summary.md` with the same content — reconcile the two before submitting rather than shipping both** |
-| [`docs/business_note.md`](docs/business_note.md) | One page for the COO: the auto-accept policy, what it costs at 4,200 vehicles/day, the assumption that moves the answer most, and what four more weeks would buy |
-| [`docs/ai_disclosure.md`](docs/ai_disclosure.md) | Where AI assistance was used (§6) |
-| `docs/contributions/` | Individual contribution statements (private) |
-
-### QA
-
-| File | What you'll find in it |
-|---|---|
-| [`docs/qa/qa_acceptance_criteria.md`](docs/qa/qa_acceptance_criteria.md) | 68 acceptance criteria in Gherkin across 8 blocks, each traced to a Jira ticket, written **before** anything was measured. Block H doubles as the pre-submission checklist with each stated deduction attached |
-| [`docs/qa/qa_execution_log.md`](docs/qa/qa_execution_log.md) | When each criterion was actually run, the result, the evidence file — including the ones that **failed** |
-
----
-
-## Where the numbers come from
-
-Never retype a number — cite the file:
-
-| File | Contains |
-|---|---|
-| `artifacts/provenance/provenance.json` | data routes, source URIs, content hashes, results block |
-| `artifacts/metrics/training_summary.json` | model accuracy, parameters, hyperparameters |
-| `artifacts/metrics/tier_results.json` | per-tier accuracy + per-plate confidences |
-| `data/generated/manifest.csv` | ground truth for 1,200 synthetic test plates |
+| [`docs/qa/qa_acceptance_criteria.md`](docs/qa/qa_acceptance_criteria.md) | 68 acceptance criteria in Gherkin across 8 blocks, each traced to a Jira ticket, written **before** anything was measured |
+| [`docs/qa/qa_execution_log.md`](docs/qa/qa_execution_log.md) | When each criterion was run, the result, the evidence file — including the ones that **failed** |
+| [`docs/ai_disclosure.md`](docs/ai_disclosure.md) | Full per-item attribution and the from-memory drill sheet. The graded disclosure is the appendix in `approach.md` |
 
 ---
 
 ## Constraints we work under
 
 - **No off-the-shelf OCR as the classifier** — Tesseract, EasyOCR, PaddleOCR
-  and cloud OCR APIs are −20 if used as the system's classifier. Ours is a
-  CNN we trained.
-- **No non-consensual plate photography** — §11 is a hard constraint; plate
+  and cloud OCR APIs are not used as the system's classifier. Ours is a CNN
+  we trained.
+- **No non-consensual plate photography** — Section 11 is a hard constraint; plate
   numbers are personal data. Every plate here is programmatically generated.
-- **Every accuracy number states its conditions** — reporting accuracy
-  without the quality tier is −5.
-- **The repo runs from a clean clone** — one Colab click, or
-  `pip install -e ./anpr_package` locally. Failing this is −8.
+- **Every accuracy number states its conditions** — always reported with the
+  quality tier it was measured under.
+- **The repo runs from a clean clone** — one Colab click opens and runs the
+  entire project.
