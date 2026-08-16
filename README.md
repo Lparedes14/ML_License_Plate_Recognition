@@ -39,7 +39,7 @@ Needs `tensorflow==2.20.0`, `gradio`, `opencv-python` and `pillow`. There is
 also a headless mode for a quick check without a browser:
 
 ```bash
-python demo_app.py --image "TEST PLATE.png"
+python demo_app.py --image demo_images/test_plate.png
 ```
 
 `demo_app.py` is a convenience runner, **not** a second implementation: it
