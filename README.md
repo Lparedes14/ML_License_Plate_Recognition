@@ -26,6 +26,34 @@ Gradio link from the most recent run. Gradio share links expire after the
 Colab session ends (usually within a few hours), so if it's down, re-run the
 notebook and swap in the fresh link it prints.
 
+### Or run the demo locally — no share link, nothing to expire
+
+[`demo_app.py`](demo_app.py) serves the same interface from the trained model
+in `artifacts/models/`, on `http://127.0.0.1:7860`:
+
+```bash
+python demo_app.py
+```
+
+Needs `tensorflow==2.20.0`, `gradio`, `opencv-python` and `pillow`. There is
+also a headless mode for a quick check without a browser:
+
+```bash
+python demo_app.py --image "TEST PLATE.png"
+```
+
+`demo_app.py` is a convenience runner, **not** a second implementation: it
+copies the pipeline functions verbatim from the notebook and deliberately
+computes no accuracy, tier or business numbers. Every figure in `docs/` comes
+from executing the notebook.
+
+> **Windows: installing TensorFlow can fail with `OSError [Errno 2]`.** This
+> repo sits under a long path, and Windows caps full paths at 260 characters
+> unless `LongPathsEnabled` is set. TensorFlow's own nested paths then push
+> past the limit. Either enable long paths (registry, needs admin), or create
+> the virtualenv somewhere short — e.g. `python -m venv C:\Users\<you>\.venvs\anpr`
+> — and install into that.
+
 ---
 
 ## Results
